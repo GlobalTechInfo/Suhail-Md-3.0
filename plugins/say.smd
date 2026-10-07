@@ -1,0 +1,368 @@
+/**
+//══════════════════════════════════════════════════════════════════════════════════════════════════════//
+//                                                                                                      //
+//                                ＷＨＡＴＳＡＰＰ ＢＯＴ－ＭＤ ＢＥＴＡ                                   //
+//                                                                                                      // 
+//                                         Ｖ：1．2．8                                                   // 
+//                                                                                                      // 
+//            ███████╗██╗   ██╗██╗  ██╗ █████╗ ██╗██╗         ███╗   ███╗██████╗                        //
+//            ██╔════╝██║   ██║██║  ██║██╔══██╗██║██║         ████╗ ████║██╔══██╗                       //
+//            ███████╗██║   ██║███████║███████║██║██║         ██╔████╔██║██║  ██║                       //
+//            ╚════██║██║   ██║██╔══██║██╔══██║██║██║         ██║╚██╔╝██║██║  ██║                       //
+//            ███████║╚██████╔╝██║  ██║██║  ██║██║███████╗    ██║ ╚═╝ ██║██████╔╝                       //
+//            ╚══════╝ ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝╚══════╝    ╚═╝     ╚═╝╚═════╝                        //
+//                                                                                                      //
+//                                                                                                      //
+//                                                                                                      //
+//══════════════════════════════════════════════════════════════════════════════════════════════════════//
+*
+   * @project_name : Suhail-Md
+   * @author : Suhail Tech Info
+   * @youtube : https://www.youtube.com/@SuhailTechInfo
+   * @description : Suhail-Md ,A Multi-functional whatsapp user bot.
+   * @version 1.2.8
+*
+* 
+   * Created By Suhail Tech Info.
+   * © 2024 Suhail-Md.
+*/
+
+let Suhail_Md = "Suhail MD Whatsapp bot md";
+const axios = require("axios");
+const fs = require("fs-extra");
+const {
+  exec
+} = require("child_process");
+const {
+  Sticker,
+  createSticker,
+  StickerTypes
+} = require("wa-sticker-formatter");
+const fetch = require("node-fetch");
+const {
+  userdb,
+  tiny,
+  fancytext,
+  smdBuffer,
+  getBuffer,
+  sleep,
+  listall,
+  getRandom,
+  prefix,
+  smd,
+  generateSticker,
+  TelegraPh,
+  Config,
+  tlang
+} = require("../lib/");
+let s_ser = Config.WORKTYPE === "public" ? false : true;
+smd({
+  pattern: "trump",
+  alias: ["tea", "kofi"],
+  category: "say",
+  desc: "give text to creat trum tweet",
+  filename: __filename
+}, async (ctx, text) => {
+  try {
+    if (!text) {
+      return await ctx.send("*provide text!*");
+    }
+    const srcImage = "./plugins/meme.say/trumSay.png";
+    const outImage = "./temp/trump.png";
+    const x = 70;
+    const y = 150;
+    const lineHeight = 700;
+    const maxChars = 4;
+    let image = await addTextToImage(srcImage, outImage, "  " + text, x, y, lineHeight, maxChars, "35");
+    await sleep(1500);
+    await ctx.bot.sendMessage(ctx.jid, {
+      image: {
+        url: image
+      },
+      caption: Config.caption
+    });
+  } catch (err) {
+    return await ctx.error(err + "\n\n command: coffe", err, "*_Didn't get any results, Sorry!_*");
+  }
+});
+smd({
+  pattern: "mia",
+  alias: ["tea", "kofi"],
+  category: "say",
+  desc: "Finds info about song",
+  filename: __filename
+}, async (ctx, text) => {
+  try {
+    if (!text) {
+      return await ctx.send("*provide text!*");
+    }
+    const {
+      sleep: sleepFn
+    } = require("../lib");
+    const srcImage = "./plugins/meme.say/mia.png";
+    const outImage = "./temp/mia.png";
+    const x = 90;
+    const y = 120;
+    const lineHeight = 600;
+    const maxChars = 3;
+    const fontSize = "35";
+    let image = await addTextToImage(srcImage, outImage, "  " + text, x, y, lineHeight, maxChars, fontSize);
+    await sleepFn(1500);
+    await ctx.bot.sendMessage(ctx.jid, {
+      image: {
+        url: image
+      },
+      caption: Config.caption
+    });
+  } catch (err) {
+    return await ctx.error(err + "\n\n command: coffe", err, "*_Didn't get any results, Sorry!_*");
+  }
+});
+smd({
+  pattern: "johni",
+  alias: ["tea", "kofi"],
+  category: "say",
+  desc: "Finds info about song",
+  filename: __filename
+}, async (ctx, text) => {
+  try {
+    if (!text) {
+      return await ctx.send("*provide text!*");
+    }
+    const {
+      sleep: sleepFn
+    } = require("../lib");
+    const srcImage = "./plugins/meme.say/johni.png";
+    const outImage = "./temp/johni.png";
+    const x = 40;
+    const y = 210;
+    const maxChars = 570;
+    const lineHeight = 3;
+    const fontSize = "30";
+    let image = await addTextToImage(srcImage, outImage, "  " + text, x, y, maxChars, lineHeight, fontSize);
+    await sleepFn(1500);
+    await ctx.bot.sendMessage(ctx.jid, {
+      image: {
+        url: image
+      },
+      caption: Config.caption
+    });
+  } catch (err) {
+    return await ctx.error(err + "\n\n command: coffe", err, "*_Didn't get any results, Sorry!_*");
+  }
+});
+smd({
+  pattern: "elon",
+  alias: ["tea", "kofi"],
+  category: "say",
+  desc: "Finds info about song",
+  filename: __filename
+}, async (ctx, text) => {
+  try {
+    if (!text) {
+      return await ctx.send("*provide text!*");
+    }
+    const {
+      sleep: sleepFn
+    } = require("../lib");
+    const srcImage = "./plugins/meme.say/elon.jpg";
+    const outImage = "./temp/elon.png";
+    const x = 60;
+    const y = 130;
+    const lineHeight = 900;
+    const fontSize = 5;
+    let image = await addTextToImage(srcImage, outImage, "\t" + text, x, y, lineHeight, fontSize);
+    await sleepFn(1500);
+    await ctx.bot.sendMessage(ctx.jid, {
+      image: {
+        url: image
+      },
+      caption: Config.caption
+    });
+  } catch (err) {
+    return await ctx.error(err + "\n\n command: coffe", err, "*_Didn't get any results, Sorry!_*");
+  }
+});
+smd({
+  pattern: "mark",
+  alias: ["tea", "kofi"],
+  category: "say",
+  desc: "Finds info about song",
+  filename: __filename
+}, async (ctx, text) => {
+  try {
+    if (!text) {
+      return await ctx.send("*provide text!*");
+    }
+    const {
+      sleep: sleepFn
+    } = require("../lib");
+    const srcImage = "./plugins/meme.say/mark.png";
+    const outImage = "./temp/mark.png";
+    const x = 30;
+    const y = 80;
+    const maxChars = 500;
+    const lineHeight = 3;
+    const fontSize = "20";
+    let image = await addTextToImage(srcImage, outImage, "  " + text, x, y, maxChars, lineHeight, fontSize);
+    await sleepFn(1500);
+    await ctx.bot.sendMessage(ctx.jid, {
+      image: {
+        url: image
+      },
+      caption: Config.caption
+    });
+  } catch (err) {
+    return await ctx.error(err + "\n\n command: coffe", err, "*_Didn't get any results, Sorry!_*");
+  }
+});
+smd({
+  pattern: "ronaldo",
+  alias: ["tea", "kofi"],
+  category: "say",
+  desc: "Finds info about song",
+  filename: __filename
+}, async (ctx, text) => {
+  try {
+    if (!text) {
+      return await ctx.send("*provide text!*");
+    }
+    const {
+      sleep: sleepFn
+    } = require("../lib");
+    const srcImage = "./plugins/meme.say/ronaldo.png";
+    const outImage = "./temp/ronaldo.png";
+    const x = 50;
+    const y = 140;
+    const fontSize = 600;
+    const lineHeight = 4;
+    const maxChars = "35";
+    let image = await addTextToImage(srcImage, outImage, "  " + text, x, y, fontSize, lineHeight, maxChars);
+    await sleepFn(1500);
+    await ctx.bot.sendMessage(ctx.jid, {
+      image: {
+        url: image
+      },
+      caption: Config.caption
+    });
+  } catch (err) {
+    return await ctx.error(err + "\n\n command: ronaldo", err, "*_Didn't get any results, Sorry!_*");
+  }
+});
+smd({
+  pattern: "modi",
+  alias: ["tea", "kofi"],
+  category: "say",
+  desc: "Finds info about song",
+  filename: __filename
+}, async (ctx, text) => {
+  try {
+    if (!text) {
+      return await ctx.send("*provide text!*");
+    }
+    const {
+      sleep: sleepFn
+    } = require("../lib");
+    const srcImage = "./plugins/meme.say/modi.png";
+    const outImage = "./temp/modi.png";
+    const x = 20;
+    const y = 70;
+    const lineHeight = 500;
+    const maxChars = 4;
+    const fontSize = "20";
+    let image = await addTextToImage(srcImage, outImage, "  " + text, x, y, lineHeight, maxChars, fontSize);
+    await sleepFn(1500);
+    await ctx.bot.sendMessage(ctx.jid, {
+      image: {
+        url: image
+      },
+      caption: Config.caption
+    });
+  } catch (err) {
+    return await ctx.error(err + "\n\n command: modi", err, "*_Didn't get any results, Sorry!_*");
+  }
+});
+smd({
+  pattern: "imran",
+  alias: ["tea", "kofi"],
+  category: "say",
+  desc: "Finds info about song",
+  filename: __filename
+}, async (ctx, text) => {
+  try {
+    if (!text) {
+      return await ctx.send("*provide text!*");
+    }
+    const {
+      sleep: sleepFn
+    } = require("../lib");
+    const srcImage = "./plugins/meme.say/imran.png";
+    const outImage = "./temp/imran.png";
+    const x = 20;
+    const y = 70;
+    const lineHeight = 500;
+    const maxChars = 5;
+    const fontSize = "20";
+    let image = await addTextToImage(srcImage, outImage, "  " + text, x, y, lineHeight, maxChars, fontSize);
+    await sleepFn(1500);
+    await ctx.bot.sendMessage(ctx.jid, {
+      image: {
+        url: image
+      },
+      caption: Config.caption
+    });
+  } catch (err) {
+    return await ctx.error(err + "\n\n command: imran", err, "*_Didn't get any results, Sorry!_*");
+  }
+});
+const {
+  createCanvas,
+  loadImage
+} = require("canvas");
+async function addTextToImage(imageSrc, outPath, text, xPos, lineStep, maxChars, lineIndex, fontSize = "30") {
+  const image = await loadImage(imageSrc);
+  const canvas = createCanvas(image.width, image.height);
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+  ctx.font = fontSize + "px Arial";
+  ctx.fillStyle = "black";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "top";
+  const lines = splitTextIntoLines(text, ctx, maxChars);
+  if (lines.length > lineIndex) {
+    lines.splice(lineIndex);
+    const caption = lines[lineIndex - 1];
+    const truncatedLine = caption.slice(0, caption.length - 10) + "...Read More";
+    lines[lineIndex - 1] = truncatedLine;
+  }
+  lines.forEach((item, index) => {
+    ctx.fillText(item, xPos, lineStep + index * 25);
+  });
+  const writeStream = fs.createWriteStream(outPath);
+  const pngStream = canvas.createPNGStream();
+  pngStream.pipe(writeStream);
+  await new Promise(onFinish => {
+    writeStream.on("finish", onFinish);
+  });
+  return outPath;
+  console.log("Image with text created:", outPath);
+}
+function splitTextIntoLines(text, ctx, maxWidth) {
+  const words = text.split(" ");
+  const lines = [];
+  let line = "";
+  for (const word of words) {
+    const candidate = line === "" ? word : line + " " + word;
+    const textWidth = ctx.measureText(candidate).width;
+    if (textWidth <= maxWidth) {
+      line = candidate;
+    } else {
+      lines.push(line);
+      line = word;
+    }
+  }
+  if (line !== "") {
+    lines.push(line);
+  }
+  return lines;
+}

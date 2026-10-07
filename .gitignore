@@ -1,0 +1,57 @@
+# Dependencies
+node_modules/
+.npm/
+
+# ── WhatsApp auth: NEVER COMMIT
+lib/Suhail_Baileys/
+lib/Suhail_Baileys*
+auth_info.json
+*.session
+session/
+
+# ── Runtime data tree
+data/**
+!data/**/
+!data/**/.gitkeep
+
+# ── Databases (runtime state, regenerated on boot)
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+
+# ── Runtime data
+baileys_store.json
+baileys_store.db
+temp/
+tmp/
+session-*.md
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Secrets / environment
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Editor / OS
+.idea/
+.vscode/
+*.sw?
+*.swo
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+.DS_Store
+Thumbs.db
+
+# Misc leftovers
+*.bak
+*.orig
+*.rej

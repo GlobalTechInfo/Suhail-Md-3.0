@@ -1,0 +1,339 @@
+/**
+//══════════════════════════════════════════════════════════════════════════════════════════════════════//
+//                                                                                                      //
+//                                ＷＨＡＴＳＡＰＰ ＢＯＴ－ＭＤ ＢＥＴＡ                                   //
+//                                                                                                      // 
+//                                         Ｖ：1．2．8                                                   // 
+//                                                                                                      // 
+//            ███████╗██╗   ██╗██╗  ██╗ █████╗ ██╗██╗         ███╗   ███╗██████╗                        //
+//            ██╔════╝██║   ██║██║  ██║██╔══██╗██║██║         ████╗ ████║██╔══██╗                       //
+//            ███████╗██║   ██║███████║███████║██║██║         ██╔████╔██║██║  ██║                       //
+//            ╚════██║██║   ██║██╔══██║██╔══██║██║██║         ██║╚██╔╝██║██║  ██║                       //
+//            ███████║╚██████╔╝██║  ██║██║  ██║██║███████╗    ██║ ╚═╝ ██║██████╔╝                       //
+//            ╚══════╝ ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝╚══════╝    ╚═╝     ╚═╝╚═════╝                        //
+//                                                                                                      //
+//                                                                                                      //
+//                                                                                                      //
+//══════════════════════════════════════════════════════════════════════════════════════════════════════//
+*
+   * @project_name : Suhail-Md
+   * @author : Suhail Tech Info
+   * @youtube : https://www.youtube.com/@SuhailTechInfo
+   * @description : Suhail-Md ,A Multi-functional whatsapp user bot.
+   * @version 1.2.8
+*
+* 
+   * Created By Suhail Tech Info.
+   * © 2024 Suhail-Md.
+*/
+
+let Suhail_Md = "Suhail MD Whatsapp bot md";
+const Config = require("../config");
+let {
+  fancytext,
+  sendGImages,
+  lang,
+  tiny,
+  runtime,
+  formatp,
+  botpic,
+  prefix,
+  sck1,
+  smd
+} = require("../lib");
+const axios = require("axios");
+const fetch = require("node-fetch");
+const {
+  fetchJson,
+  getBuffer
+} = require("../lib/");
+
+// ---- image sources ---------------------------------------------------------
+// Every upstream source in this plugin is dead: api.waifu.pics no longer resolves (NXDOMAIN),
+// waifu.pics/api/sfw now demands an API key, and the Suhail-Md-Media repo that served the
+// demon/naruto videos returns 404 (deleted). That is why all of these used to die with the
+// useless "*_Request not be Proceed!!_*" banner - a failed fetch inside sendAnime().
+//
+// Two sources do still answer and need no key:
+//   waifu.im   - use /images. The old /search path is 403 behind Cloudflare now.
+//   nekos.life - covers the tags waifu.im does not carry.
+// Set WAIFU_IM_API_KEY to lift the (optional) key requirement / raise rate limits.
+const waifuImKey = () => (global.WAIFU_IM_API_KEY || process.env.WAIFU_IM_API_KEY || "").trim();
+async function fromWaifuIm(tag, nsfw = false) {
+  const res = await axios.get("https://api.waifu.im/images", {
+    params: {
+      IncludedTags: tag,
+      PageSize: 1,
+      IsNsfw: nsfw ? "All" : "False",
+      OrderBy: "Random"
+    },
+    headers: waifuImKey() ? { "X-Api-Key": waifuImKey() } : {},
+    timeout: 25000
+  });
+  const item = res.data && res.data.items && res.data.items[0];
+  return item && item.url;
+}
+async function fromNekosLife(tag) {
+  const res = await axios.get("https://nekos.life/api/v2/img/" + tag, {
+    timeout: 25000
+  });
+  return res.data && res.data.url;
+}
+async function randomWaifuIm(nsfw = false) {
+  const res = await axios.get("https://api.waifu.im/images", {
+    params: {
+      PageSize: 1,
+      IsNsfw: nsfw ? "All" : "False",
+      OrderBy: "Random"
+    },
+    headers: waifuImKey() ? { "X-Api-Key": waifuImKey() } : {},
+    timeout: 25000
+  });
+  const item = res.data && res.data.items && res.data.items[0];
+  return item && item.url;
+}
+// A category's own source can be dead (deleted repo, retired API). Users should still get a
+// picture, so fall back to a random waifu.im image instead of telling them the command is broken.
+async function animeFallback(ctx, category) {
+  try {
+    const url = await randomWaifuIm(false);
+    if (!url) {
+      throw new Error("waifu.im returned no image");
+    }
+    return await ctx.sendMessage(ctx.jid, {
+      image: {
+        url: url
+      },
+      caption: "*" + category + "*"
+    }, {
+      quoted: ctx
+    });
+  } catch (err) {
+    return ctx.reply("*_Could not reach any image source right now. Try again shortly._*");
+  }
+}
+async function sendAnime(sock, ctx, category, args = "") {
+  try {
+    if (category === "waifu" || category === "neko" || category === "megumin") {
+      let nsfwFlag = args.split("|")[0] || "";
+      let repeatCount = args.split("|")[1] || "1";
+      let caption = args.split("|")[1] ? "" : " *" + category + ",Here we go😊!!!!*";
+      const nsfw = nsfwFlag == "nsfw";
+      for (let i = 0; i < repeatCount; i++) {
+        // waifu.im carries no neko or megumin tag, so those two come from nekos.life.
+        const imageUrl = category === "waifu" ? await fromWaifuIm("waifu", nsfw) : await fromNekosLife(category === "neko" ? "neko" : "waifu");
+        if (!imageUrl) {
+          throw new Error("no image returned for " + category);
+        }
+        await sock.bot.sendMessage(ctx.chat, {
+          image: {
+            url: imageUrl
+          },
+          caption: caption
+        }, {
+          quoted: ctx
+        });
+      }
+    } else if (category === "loli" || category === "foxgirl") {
+      if (category === "loli") {
+        // waifu.pics/api/sfw now answers {"code":"apiKeyMissing"} - the free tier is gone.
+        return await animeFallback(ctx, "loli");
+      }
+      let apiUrl = "https://nekos.life/api/v2/img/fox_girl";
+      let response = await axios.get(apiUrl);
+      await sock.bot.sendMessage(ctx.chat, {
+        image: {
+          url: response.data.url
+        }
+      }, {
+        quoted: ctx
+      });
+    } else if (category === "demon" || category === "naruto") {
+      // github.com/SuhailTechInfo/Suhail-Md-Media is 404 (the repo was deleted along with the
+      // old upstream), so there is no video.json to read.
+      return await animeFallback(ctx, category);
+      const response = await fetchJson(apiUrl);
+      const imageUrl = response.result[Math.floor(Math.random() * response.result.length)].url;
+      await sock.bot.sendMessage(ctx.chat, {
+        video: {
+          url: imageUrl
+        },
+        caption: "*Here we go😊!!!!*"
+      });
+    } else if (category === "animenews") {
+      // newsapi.org/v2 now answers 401; the free API was retired.
+      return await animeFallback(ctx, "animenews");
+      const newsResponse = await axios.get("https://newsapi.org/v2/everything?q=" + args);
+      let articles = newsResponse.data.articles;
+      articles.map(async (item, index) => {
+        try {
+          sock.bot.sendMessage(ctx.chat, {
+            image: {
+              url: item.urlToImage
+            },
+            caption: "*Title🔰:* " + item.title + "\n\n*Content🧩:* " + item.content + "\n*Author📌:* " + item.author + "\n*Source♦️:* " + item.source.name + "\n*Created On☘️:* " + item.publishedAt + "\n*More on✨:* " + item.url + "\n\n" + Config.caption + "*"
+          }, {
+            quoted: ctx
+          });
+        } catch (err) {}
+      });
+    }
+  } catch (err) {
+    console.log("./commands/Anime.js/sendAnime()\n", err);
+    await ctx.error(err);
+  }
+}
+smd({
+  pattern: "waifu",
+  desc: "To get Waifu Random Pics",
+  category: "Anime Pics",
+  filename: __filename
+}, async (ctx, text, {
+  cmdName: cmdName
+}) => {
+  try {
+    return await sendAnime(ctx, ctx, "waifu", text);
+  } catch {}
+});
+smd({
+  pattern: "neko",
+  category: "Anime Pics",
+  desc: "Sends a Neko Image in chat",
+  filename: __filename
+}, async (ctx, text, {
+  cmdName: cmdName
+}) => {
+  try {
+    return await sendAnime(ctx, ctx, "neko", text);
+  } catch {}
+});
+smd({
+  pattern: "megumin",
+  desc: "To get Waifu Random Pics",
+  category: "Anime Pics",
+  filename: __filename
+}, async (ctx, text, {
+  cmdName: cmdName
+}) => {
+  try {
+    return await sendAnime(ctx, ctx, "megumin", text);
+  } catch {}
+});
+smd({
+  pattern: "loli",
+  category: "Anime Pics",
+  filename: __filename,
+  desc: "Sends image of loli."
+}, async ctx => {
+  try {
+    return await sendAnime(ctx, ctx, "loli");
+  } catch {}
+});
+smd({
+  pattern: "foxgirl",
+  category: "Anime Pics",
+  desc: "Sends image of Fox Girl Anime.",
+  filename: __filename
+}, async ctx => {
+  try {
+    return await sendAnime(ctx, ctx, "foxgirl");
+  } catch {}
+});
+smd({
+  pattern: "demon",
+  alias: ["ds"],
+  desc: "To get Naruto Random Videos",
+  category: "Anime Pics",
+  filename: __filename
+}, async ctx => {
+  try {
+    return await sendAnime(ctx, ctx, "demon");
+  } catch {}
+});
+smd({
+  pattern: "naruto",
+  desc: "To get Naruto Random Videos",
+  category: "Anime Pics",
+  filename: __filename
+}, async ctx => {
+  try {
+    return await sendAnime(ctx, ctx, "naruto");
+  } catch {}
+});
+smd({
+  pattern: "pokepic",
+  category: "Anime Pics",
+  filename: __filename,
+  desc: "Sends image of pokemon."
+}, async (ctx, text) => {
+  try {
+    return await sendGImages(ctx, text + "Pokemon Pics only HD ", "*---「 Poke Pic 」---*", text);
+  } catch {}
+});
+smd({
+  pattern: "animepic",
+  category: "Anime Pics",
+  filename: __filename,
+  desc: "Anime images"
+}, async (ctx, text) => {
+  try {
+    return await sendGImages(ctx, text + "Anime Pics HD", "*-----「 Anime Image 」-----*", text);
+  } catch {}
+});
+smd({
+  pattern: "animewall",
+  category: "Anime Pics",
+  desc: "Anime Wallpaper Random",
+  filename: __filename
+}, async (ctx, text) => {
+  try {
+    return await sendGImages(ctx, text + "anime wallpaper for desktop full hd", "*---「 Anime Wallpaper 」---*", text);
+  } catch {}
+});
+let qq = ["Anime News Today", "New Anime", "Uocoming Anime News", "New Anime Info", "Whats news in Anime", "Anime Series", "Manga News today", "Anime New News", "Anime News today"];
+smd({
+  pattern: "animenews",
+  category: "Anime Pics",
+  desc: "Sends Anime News in chat",
+  filename: __filename
+}, async (ctx, text, {
+  cmdName: cmdName
+}) => {
+  try {
+    let caption = qq[Math.floor(Math.random() * qq.length)] + text;
+    return await sendAnime(message, message, cmdName, caption);
+  } catch {}
+});
+smd({
+  pattern: "pokemon",
+  category: "Anime Pics",
+  filename: __filename,
+  desc: "Sends info of pokemon in current chat."
+}, async (ctx, text) => {
+  try {
+    if (!text) {
+      return ctx.reply("*Uhh Please Give Me Poki Name/num*");
+    }
+    try {
+      let {
+        data: character
+      } = await axios.get("https://pokeapi.co/api/v2/pokemon/" + text);
+      if (!character.name) {
+        return ctx.reply("❌ Could not found any pokemon with that name");
+      }
+      let caption = "*•Name: " + character.name + "*\n*•Pokedex ID: " + character.id + "*\n*•Height: " + character.height + "*\n*•Weight: " + character.weight + "*\n*•Abilities: " + character.abilities[0].ability.name + ", " + character.abilities[1].ability.name + "*\n*•Base Experience: " + character.base_experience + "*\n*•Type: " + character.types[0].type.name + "*\n*•Base Stat: " + character.stats[0].base_stat + "*\n*•Attack: " + character.stats[1].base_stat + "*\n*•Defense: " + character.stats[2].base_stat + "*\n*•Special Attack: " + character.stats[3].base_stat + "*\n*•Special Defense:" + character.stats[4].base_stat + "*\n*•Speed: " + character.stats[5].base_stat + "*\n";
+      // was `Suhail.bot` - Suhail is module-scoped inside lib/smd.js, so in this file it was an
+      // undefined identifier. Every other handler here uses ctx.bot.
+      return await ctx.bot.sendMessage(ctx.jid, {
+        image: {
+          url: character.sprites.front_default
+        },
+        caption: caption
+      }, {
+        quoted: ctx
+      });
+    } catch (err) {
+      ctx.reply("*_Ahh,Couldn't found any pokemon._*");
+    }
+  } catch {}
+});

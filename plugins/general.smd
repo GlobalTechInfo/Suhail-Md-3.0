@@ -1,0 +1,757 @@
+/**
+//══════════════════════════════════════════════════════════════════════════════════════════════════════//
+//                                                                                                      //
+//                                ＷＨＡＴＳＡＰＰ ＢＯＴ－ＭＤ ＢＥＴＡ                                   //
+//                                                                                                      // 
+//                                         Ｖ：1．2．8                                                   // 
+//                                                                                                      // 
+//            ███████╗██╗   ██╗██╗  ██╗ █████╗ ██╗██╗         ███╗   ███╗██████╗                        //
+//            ██╔════╝██║   ██║██║  ██║██╔══██╗██║██║         ████╗ ████║██╔══██╗                       //
+//            ███████╗██║   ██║███████║███████║██║██║         ██╔████╔██║██║  ██║                       //
+//            ╚════██║██║   ██║██╔══██║██╔══██║██║██║         ██║╚██╔╝██║██║  ██║                       //
+//            ███████║╚██████╔╝██║  ██║██║  ██║██║███████╗    ██║ ╚═╝ ██║██████╔╝                       //
+//            ╚══════╝ ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝╚══════╝    ╚═╝     ╚═╝╚═════╝                        //
+//                                                                                                      //
+//                                                                                                      //
+//                                                                                                      //
+//══════════════════════════════════════════════════════════════════════════════════════════════════════//
+*
+   * @project_name : Suhail-Md
+   * @author : Suhail Tech Info
+   * @youtube : https://www.youtube.com/@SuhailTechInfo
+   * @description : Suhail-Md ,A Multi-functional whatsapp user bot.
+   * @version 1.2.8
+*
+* 
+   * Created By Suhail Tech Info.
+   * © 2024 Suhail-Md.
+*/
+
+let Suhail_Md = "Suhail MD Whatsapp bot md";
+const util = require("util");
+const fs = require("fs-extra");
+const {
+  cmd
+} = require("../lib/plugins");
+const {
+  formatp,
+  formatDate,
+  TelegraPh,
+  aitts,
+  tlang,
+  botpic,
+  smd,
+  prefix,
+  fetchJson,
+  runtime,
+  Config,
+  parsedJid,
+  sleep,
+  createUrl
+} = require("../lib");
+const axios = require("axios");
+const fetch = require("node-fetch");
+const os = require("os");
+const speed = require("performance-now");
+async function aiResponce(ctx, mode, prompt = "") {
+  let result = "";
+  try {
+    if (mode === "chat") {
+      result = await (await axios.get("http://api.brainshop.ai/get?bid=175685&key=Pg8Wu8mrDQjfr0uv&uid=[" + ctx.sender.split("@")[0] + "]&msg=[" + prompt + "]")).data.cnt;
+    } else if (mode === "gpt") {
+      const response = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + Config.OPENAI_API_KEY
+        },
+        body: JSON.stringify({
+          model: "gpt-3.5-turbo",
+          messages: [{
+            role: "system",
+            content: "You"
+          }, {
+            role: "user",
+            content: prompt
+          }]
+        })
+      });
+      const chatResponse = await response.json();
+      if (!chatResponse.choices || chatResponse.choices.length === 0) {
+        result = "*Invalid ChatGPT API Key, Please Put New Key*";
+      } else {
+        result = chatResponse.choices[0].message.content;
+      }
+    } else if (mode === "dalle") {
+      const response = await fetch("https://api.openai.com/v1/images/generations", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + Config.OPENAI_API_KEY
+        },
+        body: JSON.stringify({
+          model: "image-alpha-001",
+          prompt: prompt,
+          size: "512x512",
+          response_format: "url"
+        })
+      });
+      const imageResponse = await response.json();
+      result = imageResponse.data[0].url;
+    }
+    if (mode === "rmbg") {
+      const payload = {
+        image_url: prompt,
+        size: "auto"
+      };
+      axios.post("https://api.remove.bg/v1.0/removebg", payload, {
+        headers: {
+          "X-Api-Key": Config.REMOVE_BG_KEY
+        },
+        responseType: "arraybuffer"
+      }).then(uploadResult => {
+        result = Buffer.from(uploadResult.data, "binary");
+      }).catch(err => {
+        result = false;
+      });
+    }
+    return result;
+  } catch (err) {
+    console.log("error in aiResponce : ", err);
+    return "Error While getting Ai responce ";
+  }
+}
+;
+smd({
+  pattern: "chat",
+  desc: "chat with an AI",
+  category: "ai",
+  use: "<Hii, Suhail Tech Info>",
+  filename: __filename
+}, async (ctx, text) => {
+  try {
+    return ctx.reply(await aiResponce(ctx, "chat", text));
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand: chat", err, "*_no responce from chatbot, sorry!!_*");
+  }
+});
+smd({
+  pattern: "gpt",
+  desc: "chat with an AI",
+  category: "ai",
+  use: "<Hii, Suhail Tech Info>",
+  filename: __filename
+}, async (ctx, text) => {
+  try {
+    try {
+      let replyText = text ? text : bot.reply_text;
+      if (!replyText) {
+        return man.reply("Provide me a query ex Who is Suhail");
+      }
+      const response = await fetch("https://aemt.me/openai?text=" + replyText);
+      const result = await response.json();
+      if (result && result.status && result.result) {
+        return await ctx.reply(result.result);
+      }
+    } catch {}
+    if (Config.OPENAI_API_KEY == "" || !Config.OPENAI_API_KEY || !("" + Config.OPENAI_API_KEY).startsWith("sk")) {
+      return ctx.reply("```You Dont Have OPENAI API KEY \nPlease Create OPEN API KEY from Given Link \nhttps://platform.openai.com/account/api-keys\nAnd Set Key in Heroku OPENAI_API_KEY Var```");
+    }
+    if (!text) {
+      return ctx.reply("Hey there! " + ctx.senderName + ". How are you doing these days?");
+    }
+    return ctx.send(await aiResponce(ctx, "gpt", text));
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand: gpt", err, "*_no responce from chatgpt, sorry!!_*");
+  }
+});
+smd({
+  pattern: "fgpt",
+  desc: "chat with an AI",
+  category: "ai",
+  use: "<query>",
+  filename: __filename
+}, async (ctx, text) => {
+  try {
+    let replyText = text ? text : ctx.reply_text;
+    if (!replyText) {
+      return ctx.reply("Provide me a query ex Who is Suhail");
+    }
+    const response = await fetch("https://aemt.me/openai?text=" + replyText);
+    const result = await response.json();
+    if (result && result.status && result.result) {
+      return await ctx.send(result.result);
+    } else {
+      await ctx.send("*_Error while getting gpt responce!!_*");
+    }
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand: fgpt", err, "*_no responce from chatgpt, sorry!!_*");
+  }
+});
+smd({
+  pattern: "dalle",
+  alias: ["dall", "dall-e"],
+  desc: "chat with an AI",
+  category: "ai",
+  use: "<Hii, Suhail Tech Info>",
+  filename: __filename
+}, async (ctx, text) => {
+  try {
+    if (!text) {
+      return await ctx.reply("*Give Me A Query To Get Dall-E Reponce?*");
+    }
+    const dalleUrl = "https://gurugpt.cyclic.app/dalle?prompt=" + encodeURIComponent(text);
+    try {
+      return await ctx.bot.sendMessage(ctx.chat, {
+        image: {
+          url: dalleUrl
+        },
+        caption: "[PROMPT]: ```" + text + " ```  \n " + Config.caption + " "
+      });
+    } catch (err) {
+      console.log("ERROR IN DALLE RESPONCE FROM API GURUGPT\n", err);
+    }
+    if (Config.OPENAI_API_KEY == "" || !Config.OPENAI_API_KEY || !("" + Config.OPENAI_API_KEY).startsWith("sk")) {
+      return ctx.reply("```You Dont Have OPENAI API KEY \nPlease Create OPEN API KEY from Given Link \nhttps://platform.openai.com/account/api-keys\nAnd Set Key in Heroku OPENAI_API_KEY Var```");
+    }
+    return await ctx.bot.sendMessage(ctx.chat, {
+      image: {
+        url: await aiResponce(ctx, "dalle", text)
+      },
+      caption: "*---Your DALL-E Result---*\n" + Config.caption
+    });
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand: dalle", err, "*_No responce from Dall-E Ai, Sorry!!_*");
+  }
+});
+smd({
+  pattern: "imagine",
+  alias: ["imagin"],
+  desc: "chat with an AI",
+  category: "ai",
+  use: "<boy walking on street>",
+  filename: __filename
+}, async (ctx, text) => {
+  try {
+    let prompt = text || ctx.reply_text;
+    if (!prompt) {
+      return await ctx.reply("*Give Me A Query To Get imagination?*");
+    }
+    let responseText = false;
+    try {
+      const response = await fetch("https://aemt.me/openai?text=" + (prompt + " \nNOTE: Make sure to looks like imagination, make it short and concise, also in english!"));
+      const result = await response.json();
+      responseText = result && result.status && result.result ? result.result : "";
+    } catch (err) {
+      responseText = false;
+    }
+    try {
+      await Draw(prompt || ctx.reply_text).then(result => {
+        ctx.bot.sendMessage(ctx.chat, {
+          image: result,
+          caption: "*[IMAGININATION]:* ```" + prompt + " ```" + (responseText ? "\n\n*[RESPONCE]:* ```" + responseText + "``` \n" : "") + "  \n " + Config.caption + " "
+        });
+      });
+      return;
+    } catch (err) {
+      console.log("ERROR IN IMAGINE RESPONCE FROM IMAGINE API n", err);
+    }
+    if (Config.OPENAI_API_KEY == "" || !Config.OPENAI_API_KEY || !("" + Config.OPENAI_API_KEY).startsWith("sk")) {
+      return ctx.reply("```You Dont Have OPENAI API KEY \nPlease Create OPEN API KEY from Given Link \nhttps://platform.openai.com/account/api-keys\nAnd Set Key in Heroku OPENAI_API_KEY Var```");
+    }
+    return await ctx.bot.sendMessage(ctx.chat, {
+      image: {
+        url: await aiResponce(ctx, "dalle", prompt)
+      },
+      caption: "*---Your DALL-E Result---*\n" + Config.caption
+    });
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand: imagine", err, "*_No responce from Server side, Sorry!!_*");
+  }
+});
+smd({
+  pattern: "imagine2",
+  alias: ["imagin2"],
+  desc: "chat with an AI",
+  category: "ai",
+  use: "<boy walking on street>",
+  filename: __filename
+}, async (ctx, text) => {
+  try {
+    let prompt = text || ctx.reply_text;
+    if (!prompt) {
+      return await ctx.reply("*Give Me A Query To Get imagination?*");
+    }
+    const url = "https://gurugpt.cyclic.app/dalle?prompt=" + encodeURIComponent(prompt + " \nNOTE: Make sure to looks like imagination");
+    let responseText = false;
+    try {
+      const response = await fetch("https://aemt.me/openai?text=" + (prompt + " \nNOTE: Make sure to looks like imagination, make it short and concise, also in english!"));
+      const result = await response.json();
+      responseText = result && result.status && result.result ? result.result : "";
+    } catch (err) {
+      responseText = false;
+    }
+    try {
+      return await ctx.bot.sendMessage(ctx.chat, {
+        image: {
+          url: url
+        },
+        caption: "*[IMAGININATION]:* ```" + prompt + " ```" + (responseText ? "\n\n*[RESPONCE]:* ```" + responseText + "``` \n" : "") + "  \n " + Config.caption + " "
+      });
+    } catch (err) {
+      console.log("ERROR IN IMAGINE RESPONCE FROM API GURUGPT\n", err);
+    }
+    if (Config.OPENAI_API_KEY == "" || !Config.OPENAI_API_KEY || !("" + Config.OPENAI_API_KEY).startsWith("sk")) {
+      return ctx.reply("```You Dont Have OPENAI API KEY \nPlease Create OPEN API KEY from Given Link \nhttps://platform.openai.com/account/api-keys\nAnd Set Key in Heroku OPENAI_API_KEY Var```");
+    }
+    return await ctx.bot.sendMessage(ctx.chat, {
+      image: {
+        url: await aiResponce(ctx, "dalle", prompt)
+      },
+      caption: "*---Your DALL-E Result---*\n" + Config.caption
+    });
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand: imagine", err, "*_No responce from Server side, Sorry!!_*");
+  }
+});
+async function Draw(inputs) {
+  if (!process.env.HF_TOKEN) console.log("HF_TOKEN is not set. Add HF_TOKEN=hf_xxx to your .env file.");
+  const response = await fetch("https://api-inference.huggingface.co/models/prompthero/openjourney-v2", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      Authorization: "Bearer " + process.env.HF_TOKEN
+    },
+    body: JSON.stringify({
+      inputs: inputs
+    })
+  }).then(result => result.blob());
+  const imageBuffer = await response.arrayBuffer();
+  return Buffer.from(imageBuffer);
+}
+smd({
+  pattern: "rmbg",
+  alias: ["removebg"],
+  category: "ai",
+  filename: __filename,
+  desc: "Remove image Background."
+}, async ctx => {
+  try {
+    if (!Config.REMOVE_BG_KEY) {
+      return ctx.reply("```You Dont Have REMOVE_BG_KEY \nPlease Create RemoveBG KEY from Given Link \nhttps://www.remove.bg/\nAnd Set Key in REMOVE_BG_KEY Var```");
+    }
+    let mediaTypes = ["imageMessage"];
+    let quoted = mediaTypes.includes(ctx.mtype) ? ctx : ctx.reply_message;
+    if (!quoted || !mediaTypes.includes(quoted?.mtype || "null")) {
+      return await ctx.send("*_Uhh Dear, Reply to an image_*");
+    }
+    let media = await ctx.bot.downloadAndSaveMediaMessage(quoted);
+    let prompt = await TelegraPh(media);
+    try {
+      fs.unlinkSync(media);
+    } catch {}
+    let rmbgResult = await aiResponce(ctx, "rmbg", prompt);
+    if (rmbgResult) {
+      await ctx.send(rmbgResult, {
+        caption: Config.caption
+      }, "image", ctx);
+    } else {
+      await ctx.send("*_Request not be preceed!!_*");
+    }
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand: rmbg", err, "*_No responce from remove.bg, Sorry!!_*");
+  }
+});
+smd({
+  pattern: "readmore",
+  alias: ["rmore", "readmor"],
+  desc: "Adds *readmore* in given text.",
+  category: "general",
+  filename: __filename
+}, async (ctx, text) => {
+  try {
+    let quoted = text ? text : ctx.reply_text;
+    if (!quoted) {
+      quoted = "*Uhh Dear,Please provide text*\n*Eg:- _.readmor text1 readmore text2_*";
+    } else {
+      quoted += " ";
+    }
+    if (quoted.includes("readmore")) {
+      await ctx.reply(quoted.replace(/readmore/, String.fromCharCode(8206).repeat(4001)));
+    } else {
+      await ctx.reply(quoted.replace(" ", String.fromCharCode(8206).repeat(4001)));
+    }
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand : readmore", err, false);
+  }
+});
+let pmtypes = ["videoMessage", "imageMessage"];
+cmd({
+  pattern: "url",
+  alias: ["createurl"],
+  category: "general",
+  filename: __filename,
+  desc: "image to url.",
+  use: "<video | image>"
+}, async ctx => {
+  try {
+    let quoted = pmtypes.includes(ctx.mtype) ? ctx : ctx.reply_message;
+    if (!quoted || !pmtypes.includes(quoted?.mtype)) {
+      return ctx.reply("*_Uhh Dear, Reply To An Image/Video!_*");
+    }
+    let media = await ctx.bot.downloadAndSaveMediaMessage(quoted);
+    let url = await createUrl(media);
+    if (!url) {
+      return ctx.reply("*_Failed To Create Url!_*");
+    }
+    try {
+      fs.unlink(media);
+    } catch {}
+    await ctx.send(util.format(url), {}, "suhail", quoted);
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand url", err);
+  }
+});
+cmd({
+  pattern: "upload",
+  alias: ["url2"],
+  category: "general",
+  filename: __filename,
+  desc: "image to url.",
+  use: "<video | image>"
+}, async ctx => {
+  try {
+    let quoted = pmtypes.includes(ctx.mtype) ? ctx : ctx.reply_message;
+    if (!quoted || !pmtypes.includes(quoted?.mtype)) {
+      return ctx.reply("*_Uhh Dear, Reply To An Image/Video!_*");
+    }
+    let media = await ctx.bot.downloadAndSaveMediaMessage(quoted);
+    let uploaded = await createUrl(media, "uguMashi");
+    try {
+      fs.unlink(media);
+    } catch {}
+    if (!uploaded || !uploaded.url) {
+      return ctx.reply("*_Failed To Create Url!_*");
+    }
+    await ctx.send(util.format(uploaded.url), {}, "suhail", quoted);
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand upload", err);
+  }
+});
+smd({
+  pattern: "calc",
+  desc: "calculate an equation.",
+  category: "general",
+  use: "<equation>",
+  filename: __filename
+}, async (ctx, text) => {
+  try {
+    if (!text) {
+      return await ctx.reply("*Please enter a math operation*\n*Example: .calc 22+12*");
+    }
+    let expression = text.replace(/\s+/g, "");
+    if (!/^(\d+([-+%*/]\d+)+)$/.test(expression)) {
+      return await ctx.reply("Please enter a valid mathematical operation.");
+    }
+    const evaluate = source => {
+      return new Function("return " + source)();
+    };
+    const value = evaluate(expression);
+    if (expression.includes("/") && expression.split("/").some(item => item === "0")) {
+      return ctx.reply("Cannot divide by zero.");
+    }
+    if (expression.split(/[-+%*/]/).length <= 2) {
+      const [calcPrefix, operator, symbol] = expression.match(/\d+|[-+%*/]/g);
+      return await ctx.reply(calcPrefix + " " + operator + " " + symbol + " = " + value);
+    } else {
+      return await ctx.reply("Result: " + value);
+    }
+  } catch (err) {
+    return await ctx.error(err + "\n\ncommand: calc", err);
+  }
+});
+async function getDateTime() {
+  const now = new Date();
+  const date = now.toISOString().slice(0, 10);
+  const time = now.toLocaleTimeString();
+  return {
+    date: date,
+    time: time
+  };
+}
+smd({
+  pattern: "repo",
+  alias: ["git", "sc", "script"],
+  desc: "Sends info about repo",
+  category: "general",
+  filename: __filename
+}, async ctx => {
+  try {
+    // SuhailTechInfo/suhailmd-2.0 no longer exists, so this 404'd and every .repo call died with
+    // the useless "Request not be Proceed!!" banner. Missing metadata now falls back to text.
+    let repoInfo = {};
+    try {
+      const res = await axios.get("https://api.github.com/repos/GlobalTechInfo/Suhail-Md-3.0", { timeout: 20000 });
+      repoInfo = res.data || {};
+    } catch (err) {}
+    let caption = ("\nI'm Suhail-Md. A whatsApp chuddy buddy bot with rich features, Created By *" + Config.ownername + "*. 🔰\n\n  *❲❒❳ Stars:* " + (repoInfo?.stargazers_count || "120+") + " stars\n  *❲❒❳ Forks:* " + (repoInfo?.forks_count || "1000+") + " forks\n  *❲❒❳ Auther:* SuhailTechInfo\n  *❲❒❳ Create:* " + (repoInfo?.created_at || "undefined") + "\n  *❲❒❳ Repo:* _https://github.com/SuhailTechInfo/suhailmd-2.0_\n  *❲❒❳ Scan:* _" + scan + "_\n\n  *❲❒❳ Visit For Tutorial* _https://www.Youtube.com/c/SuhailTechInfo_\n" + (Config.caption ? "\n\n" + Config.caption : "")).trim();
+    return await ctx.sendUi(ctx.jid, {
+      caption: caption
+    });
+  } catch (err) {
+    console.log("command: repo\n", err);
+  }
+});
+smd({
+  pattern: "status",
+  alias: ["about", "info"],
+  desc: "To check bot status",
+  category: "general",
+  filename: __filename
+}, async ctx => {
+  try {
+    const unused = process.uptime();
+    timestampe = speed();
+    latensie = speed() - timestampe;
+    let caption = (" 🔰 *I am " + Config.botname + "* 🔰\n  *❲❒❳ Description:* A WhatsApp bot with rich features, Created By *" + Config.ownername + "*.\n\n  *❲❒❳ Speed:* " + latensie.toFixed(4) + " ms\n  *❲❒❳ Uptime:* " + runtime(process.uptime()) + "\n  *❲❒❳ Version:* " + Config.VERSION + "\n  *❲❒❳ Owner:*  " + Config.ownername + "\n\n  *❲❒❳ Support:* _" + gurl + "_ \n" + (Config.caption ? "\n\n" + Config.caption : "")).trim();
+    return await ctx.bot.sendUi(ctx.jid, {
+      caption: caption
+    });
+  } catch {}
+});
+smd({
+  pattern: "cpu",
+  desc: "To check bot status",
+  category: "general",
+  filename: __filename
+}, async ctx => {
+  try {
+    const memoryUsage = process.memoryUsage();
+    const samples = os.cpus().map(item => {
+      item.total = Object.keys(item.times).reduce((acc, entry) => acc + item.times[entry], 0);
+      return item;
+    });
+    const stats = samples.reduce((acc, item, unused, {
+      length: sampleList
+    }) => {
+      acc.total += item.total;
+      acc.speed += item.speed / sampleList;
+      acc.times.user += item.times.user;
+      acc.times.nice += item.times.nice;
+      acc.times.sys += item.times.sys;
+      acc.times.idle += item.times.idle;
+      acc.times.irq += item.times.irq;
+      return acc;
+    }, {
+      speed: 0,
+      total: 0,
+      times: {
+        user: 0,
+        nice: 0,
+        sys: 0,
+        idle: 0,
+        irq: 0
+      }
+    });
+    timestampe = speed();
+    latensie = speed() - timestampe;
+    var startTime = performance.now();
+    var endTime = performance.now();
+    respon = ("*❲❒❳ " + Config.botname + " Server Info ❲❒❳*\n\n  *❲❒❳ Runtime:* " + runtime(process.uptime()) + "\n  *❲❒❳ Speed:* " + latensie.toFixed(3) + "/" + (endTime - startTime).toFixed(3) + " ms\n  *❲❒❳ RAM:* " + formatp(os.totalmem() - os.freemem()) + " / " + formatp(os.totalmem()) + "\n\n  *❲❒❳ Memory Usage:*\n      " + Object.keys(memoryUsage).map((item, index, items) => item.padEnd(Math.max(...items.map(entry => entry.length)), " ") + ": " + formatp(memoryUsage[item])).join("\n      ") + "\n\n" + (samples[0] ? "  *❲❒❳ Total CPU Usage:*\n  *" + samples[0].model.trim() + " (" + stats.speed + " MHZ)*\n      " + Object.keys(stats.times).map(item => "-" + (item + "").padEnd(6) + ": " + (stats.times[item] * 100 / stats.total).toFixed(2) + "%").join("\n      ") + "\n\n  *❲❒❳ CPU Core Usage (" + samples.length + " Core CPU)*\n  " + samples.map((item, index) => "*Core " + (index + 1) + ": " + item.model.trim() + " (" + item.speed + " MHZ)*\n      " + Object.keys(item.times).map(entry => "-" + (entry + "").padEnd(6) + ": " + (item.times[entry] * 100 / item.total).toFixed(2) + "%").join("\n      ")).join("\n\n") : "") + "\n").trim();
+    return await ctx.send(respon, {}, "", ctx);
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand: cpu", err, "*_No responce from Server side, Sorry!!_*");
+  }
+});
+smd({
+  pattern: "advt",
+  alias: ["advertisement"],
+  category: "ai",
+  desc: "Advertise of your Message, by sending it to provided nmbr range.",
+  use: "9231844741xx,Your_text_here",
+  fromMe: true,
+  filename: __filename
+}, async (ctx, text) => {
+  try {
+    let expression = text ? text : ctx.reply_text;
+    if (!expression) {
+      return await ctx.reply("*Advertise of your Message*\n*by sending it to provided nmbr range.*\n" + prefix + "advt 9231844741xx,Your_text_here");
+    }
+    const separatorIndex = expression.indexOf(",");
+    if (separatorIndex === -1) {
+      return await ctx.send("*Invalid format. Please provide number and Message separated by a comma.*");
+    }
+    let calcExpression = "" + expression.slice(0, separatorIndex).trim();
+    let replyText = expression.slice(separatorIndex + 1).trim() + "\n\n\n" + Config.caption;
+    if (!calcExpression.includes("x")) {
+      return ctx.send("*You did not add x in number.*\n*Ex: " + prefix + "advt 9231844741xx,Your_Message_here*  \n " + Config.caption);
+    }
+    await ctx.send("*Sending message to given number range.!*\n*It may take some time, so wait please*");
+    function lastIndexOf(calcText, separator) {
+      return calcText.split(separator).length - 1;
+    }
+    var calcPrefix = calcExpression.split("x")[0];
+    var operand = calcExpression.split("x")[lastIndexOf(calcExpression, "x")] ? calcExpression.split("x")[lastIndexOf(calcExpression, "x")] : "";
+    var result = lastIndexOf(calcExpression, "x");
+    var operandCount;
+    if (result == 1) {
+      operandCount = 10;
+    } else if (result == 2) {
+      operandCount = 100;
+    } else if (result == 3) {
+      operandCount = 1000;
+    } else if (result > 3) {
+      return await ctx.send("*Only 3(x) are Allowed in number*");
+    }
+    let adDoneText = 0;
+    let numbers = "";
+    var number = "";
+    for (let i = 0; i < operandCount; i++) {
+      var results = await ctx.bot.onWhatsApp("" + calcPrefix + i + operand + "@s.whatsapp.net");
+      if (results[0]) {
+        number = results[0].jid;
+        if (numbers.includes(number)) {
+          continue;
+        }
+        await sleep(1500);
+        await ctx.bot.sendMessage(number, {
+          text: replyText
+        });
+        numbers = numbers + "," + number;
+        adDoneText += 1;
+      }
+    }
+    return await ctx.send("*_Advertisement of your Message is Done,_* \n\n*_Message Succesfully sent to " + adDoneText + " chats_*\nLast_User: " + number.split("@")[0] + "\nSearch_No: " + operandCount + " number searched\n\n\n" + Config.caption);
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand: dalle", err, "*_No responce from Server side, Sorry!!_*");
+  }
+});
+const sᴜʜᴀɪʟ_ᴍᴅ_AnonyMsg = {};
+let isAnnonyMsgAlive = "";
+let cmdName = "rcg";
+class AnonymousMsg {
+  constructor() {
+    this.id = "";
+    this.sender = "";
+    this.reciever = "";
+    this.senderMsg = "";
+    this.tellinfo = 0;
+    this.howmanyreply = 0;
+  }
+}
+smd({
+  pattern: "anonymsg",
+  alias: ["recognition", "anonychat"],
+  desc: "Send message Annonymously",
+  category: "ai",
+  use: "<Hii, Suhail Tech Info>",
+  filename: __filename
+}, async (ctx, text, {
+  smd: smdHelper
+}) => {
+  try {
+    let number = text ? text : ctx.reply_text;
+    if (!number) {
+      return await ctx.send("*provide number with msg to send Anonymously.* \n*Example " + (prefix + smdHelper) + " 923184474176,your_Message*", {}, "", ctx);
+    }
+    if (ctx.isCreator && number === "info") {
+      return await ctx.reply(isAnnonyMsgAlive == "" ? "*Theres no Anonymous Chat created yet*" : "*Anonymous Chat Recivers*\n_" + isAnnonyMsgAlive + "_");
+    }
+    const separatorIndex = number.indexOf(",");
+    if (separatorIndex === -1) {
+      return await ctx.reply("*Invalid format. Please provide both number and Message separated by a comma.*");
+    }
+    let targetNumber = number.slice(0, separatorIndex).trim() + "@s.whatsapp.net";
+    let info = number.slice(separatorIndex + 1).trim();
+    let recipients = (await parsedJid(targetNumber)) || [];
+    if (recipients[0]) {
+      const {
+        date: dateText,
+        time: anonDate
+      } = await getDateTime();
+      const msgId = "anony-msg-" + Math.floor(100000 + Math.random() * 900000);
+      sᴜʜᴀɪʟ_ᴍᴅ_AnonyMsg[msgId] = new AnonymousMsg();
+      let msg = sᴜʜᴀɪʟ_ᴍᴅ_AnonyMsg[msgId];
+      msg.id = msgId;
+      msg.sender = ctx.sender;
+      msg.reciever = recipients[0];
+      msg.msgStatus = true;
+      msg.senderMsg = ctx;
+      info = "*sᴜʜᴀɪʟ-ᴍᴅ • ᴀɴɴᴏɴʏᴍᴏᴜs ᴍsɢ*\n\n*Msg_Id:* " + msg.id + "\n*Date:* _" + dateText + "_\n*Time:* _" + anonDate + "_\n\n*Message:* " + info + "\n\n\n" + Config.caption;
+      isAnnonyMsgAlive = isAnnonyMsgAlive + "," + msg.reciever;
+      await ctx.bot.sendMessage(msg.reciever, {
+        text: info
+      });
+      return await ctx.reply("*_Anonymous message sent succesfully_*");
+    } else {
+      return await ctx.reply("*_Provided number is not valid!!!_*");
+    }
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand: " + smdHelper, err, "*_Can't send annonymously message yet, Sorry!!_*");
+  }
+});
+smd({
+  on: "text"
+}, async ctx => {
+  try {
+    if (ctx.quoted && isAnnonyMsgAlive.includes(ctx.sender) && ctx.text.length > 2) {
+      const operands = ctx.reply_text.split("\n");
+      if (operands.length < 3) {
+        return;
+      }
+      if (ctx.reply_text.includes("sᴜʜᴀɪʟ-ᴍᴅ • ᴀɴɴᴏɴʏᴍᴏᴜs ᴍsɢ") && operands[0].includes("sᴜʜᴀɪʟ-ᴍᴅ • ᴀɴɴᴏɴʏᴍᴏᴜs ᴍsɢ") && operands[2].includes("Msg_Id")) {
+        let id = "" + operands[2].replace("*Msg_Id:* ", "").trim();
+        let entry = sᴜʜᴀɪʟ_ᴍᴅ_AnonyMsg[id];
+        if (!entry) {
+          return;
+        }
+        try {
+          if (entry) {
+            let command = ctx.text.split(",")[0].trim();
+            if (command.toLowerCase().startsWith("reply")) {
+              entry.howmanyreply += 1;
+              const replyText = ctx.text.indexOf(",");
+              let anonReplyText = "*sᴜʜᴀɪʟ-ᴍᴅ • ʏᴏᴜʀ ᴀɴᴏɴʏ-ᴍsɢ ʀᴇᴘʟʏ*\n\n*_From @" + entry.reciever.split("@")[0] + "_*\n*_Msg_Id: " + entry.id + "_*\n\n*Message:* " + ctx.text.slice(replyText + 1).trim() + "\n\n\n\n" + Config.caption;
+              if (entry.howmanyreply >= 2) {
+                isAnnonyMsgAlive = isAnnonyMsgAlive.replace("," + ctx.sender, "");
+              }
+              await ctx.bot.sendMessage(entry.sender, {
+                text: anonReplyText,
+                mentions: [entry.reciever]
+              }, {
+                quoted: entry.senderMsg
+              });
+              if (entry.howmanyreply >= 2) {
+                isAnnonyMsgAlive = isAnnonyMsgAlive.replace("," + ctx.sender, "");
+                delete sᴜʜᴀɪʟ_ᴍᴅ_AnonyMsg[id];
+              }
+              return await ctx.reply("*_Your Message succesfully deliver to User_* " + (entry.howmanyreply == 1 ? "\n*you can reply 1 more time*" : "") + " ");
+            } else if (entry.tellinfo === 0) {
+              entry.tellinfo = 1;
+              let replyText = "*Basically, Its an Annonymous Message*\n\n_Msg_Id: " + entry.id + "_\n_this message sended by a chatbot_\n_User not wants to expose itself to send that msg_\n\n\n*if you wanna reply to that user,*\n*Send msg by replying to above message*\n*Type like:* reply, Type_your_Message_Here\n*Example:* reply, Can you text me from your number\n\n\n" + Config.caption;
+              ctx.bot.sendMessage(entry.reciever, {
+                text: replyText
+              }, {
+                quoted: ctx
+              });
+            } else if (entry.tellinfo === 1) {
+              entry.tellinfo = 2;
+              ctx.reply("*Please follow the format if reply to msg*\n*Type like: _reply, Type_your_Message_Here_*");
+            }
+          }
+        } catch (err) {
+          console.log("error : ", err);
+        }
+      }
+    }
+  } catch {}
+});
+smd({
+  pattern: "aitts",
+  desc: "Text to Voice Using Eleven Lab Ai",
+  category: "ai",
+  use: "<Hii, Suhail Tech Info>",
+  filename: __filename
+}, async (ctx, text) => {
+  await aitts(ctx, text || ctx.reply_text);
+});

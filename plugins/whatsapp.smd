@@ -1,0 +1,448 @@
+/**
+//══════════════════════════════════════════════════════════════════════════════════════════════════════//
+//                                                                                                      //
+//                                ＷＨＡＴＳＡＰＰ ＢＯＴ－ＭＤ ＢＥＴＡ                                   //
+//                                                                                                      // 
+//                                         Ｖ：1．2．8                                                   // 
+//                                                                                                      // 
+//            ███████╗██╗   ██╗██╗  ██╗ █████╗ ██╗██╗         ███╗   ███╗██████╗                        //
+//            ██╔════╝██║   ██║██║  ██║██╔══██╗██║██║         ████╗ ████║██╔══██╗                       //
+//            ███████╗██║   ██║███████║███████║██║██║         ██╔████╔██║██║  ██║                       //
+//            ╚════██║██║   ██║██╔══██║██╔══██║██║██║         ██║╚██╔╝██║██║  ██║                       //
+//            ███████║╚██████╔╝██║  ██║██║  ██║██║███████╗    ██║ ╚═╝ ██║██████╔╝                       //
+//            ╚══════╝ ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝╚══════╝    ╚═╝     ╚═╝╚═════╝                        //
+//                                                                                                      //
+//                                                                                                      //
+//                                                                                                      //
+//══════════════════════════════════════════════════════════════════════════════════════════════════════//
+*
+   * @project_name : Suhail-Md
+   * @author : Suhail Tech Info
+   * @youtube : https://www.youtube.com/@SuhailTechInfo
+   * @description : Suhail-Md ,A Multi-functional whatsapp user bot.
+   * @version 1.2.8
+*
+* 
+   * Created By Suhail Tech Info.
+   * © 2024 Suhail-Md.
+*/
+
+let Suhail_Md = "Suhail MD Whatsapp bot md";
+const moment = require("moment-timezone");
+const Config = require("../config");
+let {
+  fancytext,
+  smd,
+  tlang,
+  tiny,
+  botpic,
+  prefix,
+  updateProfilePicture,
+  parsedJid
+} = require("../lib");
+const long = String.fromCharCode(8206);
+const readmore = long.repeat(4001);
+let sᴜʜᴀɪʟ_ᴍᴅ;
+const {
+  cmd
+} = require("../lib/plugins");
+cmd({
+  pattern: "privacy",
+  desc: "send ptv Message of video",
+  category: "whatsapp",
+  filename: __filename
+}, async (ctx, text, {
+  cmdName: cmdName
+}) => {
+  try {
+    const privacy = await ctx.bot.fetchPrivacySettings();
+    txt = "*[WHATSAPP PRIVACY SETTINGS]*\n\n*PROFILE:* " + privacy.profile + "\n*STATUS:* " + privacy.status + "\n*ONLINE:* " + privacy.online + "\n*LASTSEEN:* " + privacy.last + "\n*MESSAGE READ:* " + privacy.readreceipts + "\n\n*Who can add in group:* " + privacy.groupadd + "\n*Who can call:* " + privacy.calladd + "\n    ";
+    await ctx.send(txt);
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand : privacy", err);
+  }
+});
+let mtypes = ["imageMessage"];
+smd({
+  pattern: "pp",
+  desc: "Set profile picture",
+  category: "whatsapp",
+  use: "<reply to image>",
+  fromMe: true,
+  filename: __filename
+}, async ctx => {
+  try {
+    let quoted = mtypes.includes(ctx.mtype) ? ctx : ctx.reply_message;
+    if (!quoted || !mtypes.includes(quoted?.mtype || "need_Media")) {
+      return await ctx.reply("*Reply to an image, dear*");
+    }
+    return await updateProfilePicture(ctx, ctx.user, quoted, "pp");
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand : pp", err);
+  }
+});
+smd({
+  pattern: "fullpp",
+  desc: "Set full screen profile picture",
+  category: "whatsapp",
+  use: "<reply to image>",
+  fromMe: true,
+  filename: __filename
+}, async ctx => {
+  try {
+    let quoted = mtypes.includes(ctx.mtype) ? ctx : ctx.reply_message;
+    if (!quoted || !mtypes.includes(quoted?.mtype || "need_Media")) {
+      return await ctx.reply("*Reply to an image, dear*");
+    }
+    return await updateProfilePicture(ctx, ctx.user, quoted, "fullpp");
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand : fullpp", err);
+  }
+  {}
+});
+smd({
+  pattern: "rpp",
+  desc: "remove profile picture",
+  category: "whatsapp",
+  use: "<chat>",
+  fromMe: true,
+  filename: __filename
+}, async ctx => {
+  try {
+    await ctx.removepp();
+    ctx.send("*_Profile picture removed successfully!_*");
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand : rpp", err);
+  }
+});
+smd({
+  pattern: "bio",
+  desc: "update profile status of whatsapp",
+  category: "whatsapp",
+  use: "<text>",
+  fromMe: true,
+  filename: __filename
+}, async (ctx, text) => {
+  try {
+    if (!text) {
+      return await ctx.send("*_provide text to update profile status!_*\n*_Example: " + prefix + "bio Suhail Md_*");
+    }
+    await ctx.bot.updateProfileStatus(text);
+    ctx.send("*Profile status updated successfully!*");
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand : bio", err);
+  }
+});
+cmd({
+  pattern: "ptv",
+  desc: "send ptv Message of video",
+  category: "whatsapp",
+  filename: __filename
+}, async (ctx, text, {
+  cmdName: cmdName
+}) => {
+  try {
+    if (!ctx.quoted) {
+      return await ctx.send("*Uhh Please, reply to video*");
+    }
+    let quotedType = ctx.quoted.mtype;
+    if (quotedType !== "videoMessage") {
+      return await ctx.send("*Uhh Dear, reply to a video message*");
+    }
+    return await ctx.bot.forwardOrBroadCast2(ctx.chat, ctx.quoted, {}, cmdName);
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand : ptv", err);
+  }
+});
+cmd({
+  pattern: "save",
+  desc: "Save Message to log number",
+  category: "whatsapp",
+  filename: __filename
+}, async (ctx, text, {
+  cmdName: cmdName
+}) => {
+  try {
+    let quoted = ctx.reply_message;
+    if (!quoted) {
+      return await ctx.send("*Uhh Please, reply to to a Message*");
+    }
+    let forwarded = await ctx.bot.forwardOrBroadCast(ctx.user, quoted);
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand : save", err);
+  }
+});
+cmd({
+  pattern: "quoted",
+  desc: "get reply Message from Replied Message",
+  category: "user",
+  filename: __filename
+}, async ctx => {
+  try {
+    if (!ctx.quoted) {
+      return await ctx.send("*_Uhh Dear, Reply to a Message_*");
+    }
+    var quotedCtx = await ctx.bot.serializeM(await ctx.getQuotedObj());
+    if (!quotedCtx || !quotedCtx.quoted) {
+      return await ctx.replay("*Message you replied does not contain a reply Message*");
+    }
+    try {
+      await ctx.react("✨", ctx);
+      let serializedMsg = await ctx.bot.serializeM(await quotedCtx.getQuotedObj());
+      return await ctx.bot.copyNForward(ctx.chat, serializedMsg, false);
+    } catch (err) {
+      await ctx.bot.forward(ctx.chat, quotedCtx.quoted, {}, ctx);
+      console.log(err);
+    }
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand : quoted", err);
+  }
+});
+cmd({
+  pattern: "blocklist",
+  desc: "get list of all Blocked Numbers",
+  category: "whatsapp",
+  fromMe: true,
+  filename: __filename,
+  use: "<text>"
+}, async ctx => {
+  try {
+    const blocklist = await ctx.bot.fetchBlocklist();
+    if (blocklist.length === 0) {
+      return await ctx.reply("Uhh Dear, You don't have any Blocked Numbers.");
+    }
+    let blocklistText = "\n*≡ List*\n\n*_Total Users:* " + blocklist.length + "_\n\n┌─⊷ \t*BLOCKED USERS*\n";
+    for (let i = 0; i < blocklist.length; i++) {
+      blocklistText += "▢ " + (i + 1) + ":- wa.me/" + blocklist[i].split("@")[0] + "\n";
+    }
+    blocklistText += "└───────────";
+    return await ctx.bot.sendMessage(ctx.chat, {
+      text: blocklistText
+    });
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand : blocklist", err);
+  }
+});
+cmd({
+  pattern: "location",
+  desc: "Adds *readmore* in given text.",
+  category: "whatsapp",
+  filename: __filename
+}, async (ctx, text) => {
+  try {
+    if (!text) {
+      return await ctx.reply("*Give Coordinates To Send Location!*\n *Ex: " + prefix + "location 24.121231,55.1121221*");
+    }
+    let fromCount = parseFloat(text.split(",")[0]) || "";
+    let toCount = parseFloat(text.split(",")[1]) || "";
+    if (!fromCount || isNaN(fromCount) || !toCount || isNaN(toCount)) {
+      return await ctx.reply("*_Cordinates Not In Formate, Try Again_*");
+    }
+    await ctx.reply("*----------LOCATION------------*\n```Sending Location Of Given Data:\n Latitude: " + fromCount + "\n Longitude: " + toCount + "```\n\n" + Config.caption);
+    return await ctx.sendMessage(ctx.jid, {
+      location: {
+        degreesLatitude: fromCount,
+        degreesLongitude: toCount
+      }
+    }, {
+      quoted: ctx
+    });
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand : location", err);
+  }
+});
+smd({
+  pattern: "listpc",
+  category: "whatsapp",
+  desc: "Finds info about personal chats",
+  filename: __filename
+}, async (ctx, text, {
+  store: store
+}) => {
+  try {
+    ctx.react("🫡");
+    // Include @lid-addressed DMs too, otherwise the personal-chat list looks empty now that
+    // WhatsApp addresses many DMs by lid.
+    let pmChats = await store.chats.all().filter(item => item.id && (item.id.endsWith(".net") || item.id.endsWith("@lid"))).map(item => item);
+    let userList = " 「  " + Config.botname + "'s pm user list  」\n\nTotal " + pmChats.length + " users are text in personal chat.";
+    for (let pmChat of pmChats) {
+      userList += "\n\nUser: @" + pmChat.id.split("@")[0] + "\nMessages : " + countMessages(store, pmChat.id) + "\nLastchat : " + moment(pmChat.conversationTimestamp * 1000).tz(timezone).format("DD/MM/YYYY HH:mm:ss");
+    }
+    ctx.bot.sendTextWithMentions(ctx.chat, userList, ctx);
+  } catch (err) {
+    return await ctx.error(err + "\n\n command: listpc", err, "*_Didn't get any results, Sorry!_*");
+  }
+});
+smd({
+  pattern: "listgc",
+  category: "whatsapp",
+  desc: "Finds info about all active groups",
+  filename: __filename
+}, async (ctx, text, {
+  store: store,
+  Void: Void
+}) => {
+  try {
+    ctx.react("🫡");
+    let groupChats = await store.chats.all().filter(item => item.id.endsWith("@g.us")).map(item => item);
+    let groupList = " 「  " + Config.botname + "'s group user list  」\n\nTotal " + groupChats.length + " active Groups found!";
+    for (let group of groupChats) {
+      let metadata = await Void.groupMetadata(group.id);
+      groupList += "\n\nName : " + metadata.subject + " " + (metadata.owner ? "\nOwner : @" + metadata.owner.split("@")[0] : "") + "\nID : " + group.id + "\nMade : " + (metadata.creation ? moment(metadata.creation * 1000).tz("Asia/Kolkata").format("DD/MM/YYYY HH:mm:ss") : metadata.creation) + "\nMember : " + (metadata.participants.length || 0) + "\n\nMessages : " + countMessages(store, group.id) + "\nLastchat : " + moment(group.conversationTimestamp * 1000).tz(timezone).format("DD/MM/YYYY HH:mm:ss");
+    }
+    ctx.send(groupList, {}, "suhail", ctx);
+  } catch (err) {
+    return await ctx.error(err + "\n\n command: listpc", err, "*_Didn't get any results, Sorry!_*");
+  }
+});
+cmd({
+  pattern: "vcard",
+  desc: "Create Contact by given name.",
+  category: "whatsapp",
+  filename: __filename
+}, async (ctx, text) => {
+  try {
+    if (!ctx.quoted) {
+      return ctx.reply("*Please Reply to User With Name*");
+    }
+    if (!text) {
+      return ctx.reply("Please Give Me User Name, \n *Example : " + prefix + "vcard Suhail Tech Info* ");
+    }
+    var contactParts = text.split(" ");
+    if (contactParts.length > 3) {
+      text = contactParts.slice(0, 3).join(" ");
+    }
+    const vcard = "BEGIN:VCARD\nVERSION:3.0\nFN:" + text + "\nORG:;\nTEL;type=CELL;type=VOICE;waid=" + ctx.quoted.sender.split("@")[0] + ":+" + owner[0] + "\nEND:VCARD";
+    let vcardMessage = {
+      contacts: {
+        displayName: text,
+        contacts: [{
+          vcard: vcard
+        }]
+      }
+    };
+    return await ctx.bot.sendMessage(ctx.chat, vcardMessage, {
+      quoted: ctx
+    });
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand : vcard", err);
+  }
+});
+smd({
+  pattern: "edit",
+  fromMe: true,
+  desc: "edit message that sended by bot",
+  type: "whatsapp"
+}, async (ctx, text) => {
+  try {
+    let quoted = ctx.reply_message && ctx.reply_message.fromMe ? ctx.reply_message : false;
+    if (!quoted) {
+      return await ctx.reply("_Reply to a message that sent by you!_");
+    }
+    if (!text) {
+      return await ctx.reply("_Need text, Example: edit hi_");
+    }
+    return await ctx.edit(text, {
+      edit: quoted
+    });
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand : edit", err);
+  }
+});
+smd({
+  pattern: "forward",
+  alias: ["send"],
+  desc: "forward your messages in your jid",
+  type: "whatsapp"
+}, async (ctx, text) => {
+  try {
+    if (!ctx.reply_message) {
+      return ctx.reply("*_Reply to something!_*");
+    }
+    let parsedJids = await parsedJid(text);
+    if (!text || !parsedJids || !parsedJids[0]) {
+      return await ctx.send("*Provide jid to forward message*\n*use _" + prefix + "jid,_ to get jid of users!*");
+    }
+    for (let i = 0; i < parsedJids.length; i++) {
+      ctx.bot.forwardOrBroadCast(parsedJids[i], ctx.reply_message);
+    }
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand : forward", err);
+  }
+});
+smd({
+  cmdname: "block",
+  info: "blocks a person",
+  fromMe: true,
+  type: "whatsapp",
+  filename: __filename,
+  use: "<quote/reply user.>"
+}, async ctx => {
+  try {
+    let sender = ctx.reply_message ? ctx.reply_message.sender : !ctx.isGroup ? ctx.from : ctx.mentionedJid[0] ? ctx.mentionedJid[0] : "";
+    if (!sender) {
+      return await ctx.reply("*Uhh dear, reply/mention an User*");
+    }
+    if (ctx.checkBot(sender)) {
+      return await ctx.reply("*Huh, I can't block my Creator!!*");
+    }
+    await ctx.bot.updateBlockStatus(sender, "block").then(result => {
+      ctx.react("✨", ctx);
+    }).catch(err => ctx.reply("*_Can't block user, Sorry!!_*"));
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand: block", err, false);
+  }
+});
+smd({
+  cmdname: "unblock",
+  info: "Unblocked user.",
+  type: "whatsapp",
+  fromMe: true,
+  filename: __filename
+}, async ctx => {
+  try {
+    let sender = ctx.reply_message ? ctx.reply_message.sender : !ctx.isGroup ? ctx.from : ctx.mentionedJid[0] ? ctx.mentionedJid[0] : "";
+    if (!sender) {
+      return await ctx.reply("*Uhh dear, reply/mention an User*");
+    }
+    await ctx.bot.updateBlockStatus(sender, "unblock").then(result => ctx.send("*@" + sender.split("@")[0] + " Unblocked Successfully..!*", {
+      mentions: [users]
+    })).catch(err => ctx.reply("*_Can't Unblock user, Make sure user blocked!!_*"));
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand: unblock", err);
+  }
+});
+cmd({
+  pattern: "vv",
+  alias: ["viewonce", "retrive"],
+  desc: "download viewOnce Message.",
+  category: "whatsapp",
+  use: "<query>",
+  filename: __filename
+}, async (ctx, text) => {
+  try {
+    var viewOnceMsg = ctx.reply_message && ctx.reply_message.viewOnce ? ctx.reply_message : false;
+    if (!viewOnceMsg) {
+      return ctx.reply("```Please Reply A ViewOnce Message```");
+    }
+    let quoted = {
+      key: viewOnceMsg.key,
+      message: {
+        conversation: "```[VIEWONCE FOUND DOWNLOAD 100%]```"
+      }
+    };
+    let mediaPath = await ctx.bot.downloadAndSaveMediaMessage(viewOnceMsg.msg);
+    await ctx.bot.sendMessage(ctx.jid, {
+      [viewOnceMsg.mtype2.split("Mes")[0]]: {
+        url: mediaPath
+      },
+      caption: viewOnceMsg.body
+    }, {
+      quoted: quoted
+    });
+  } catch (err) {
+    // was `message.error` - there is no `message` in this handler (it is `ctx`), so any failure
+    // inside .vv threw a second ReferenceError and the actual cause was lost.
+    await ctx.error(err + "\n\ncommand: vv", err);
+  }
+});

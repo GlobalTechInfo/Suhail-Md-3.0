@@ -1,0 +1,12 @@
+modules = ["nodejs-24", "web", "nix"]
+run = "npm ci && npm start"
+
+[nix]
+channel = "stable-24_05"
+
+[deployment]
+run = ["sh", "-c", "npm start"]
+
+[[ports]]
+localPort = 8000
+externalPort = 8000

@@ -1,0 +1,768 @@
+/**
+//══════════════════════════════════════════════════════════════════════════════════════════════════════//
+//                                                                                                      //
+//                                ＷＨＡＴＳＡＰＰ ＢＯＴ－ＭＤ ＢＥＴＡ                                   //
+//                                                                                                      // 
+//                                         Ｖ：1．2．8                                                   // 
+//                                                                                                      // 
+//            ███████╗██╗   ██╗██╗  ██╗ █████╗ ██╗██╗         ███╗   ███╗██████╗                        //
+//            ██╔════╝██║   ██║██║  ██║██╔══██╗██║██║         ████╗ ████║██╔══██╗                       //
+//            ███████╗██║   ██║███████║███████║██║██║         ██╔████╔██║██║  ██║                       //
+//            ╚════██║██║   ██║██╔══██║██╔══██║██║██║         ██║╚██╔╝██║██║  ██║                       //
+//            ███████║╚██████╔╝██║  ██║██║  ██║██║███████╗    ██║ ╚═╝ ██║██████╔╝                       //
+//            ╚══════╝ ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝╚══════╝    ╚═╝     ╚═╝╚═════╝                        //
+//                                                                                                      //
+//                                                                                                      //
+//                                                                                                      //
+//══════════════════════════════════════════════════════════════════════════════════════════════════════//
+*
+   * @project_name : Suhail-Md
+   * @author : Suhail Tech Info
+   * @youtube : https://www.youtube.com/@SuhailTechInfo
+   * @description : Suhail-Md ,A Multi-functional whatsapp user bot.
+   * @version 1.2.8
+*
+* 
+   * Created By Suhail Tech Info.
+   * © 2024 Suhail-Md.
+*/
+
+let Suhail_Md = "Suhail MD Whatsapp bot md";
+const axios = require("axios");
+const fs = require("fs-extra");
+const util = require("util");
+const {
+  exec
+} = require("child_process");
+const {
+  Sticker,
+  createSticker,
+  StickerTypes
+} = require("wa-sticker-formatter");
+const fetch = require("node-fetch");
+const {
+  userdb,
+  tiny,
+  fancytext,
+  smdBuffer,
+  getBuffer,
+  sleep,
+  listall,
+  getRandom,
+  prefix,
+  smd,
+  generateSticker,
+  TelegraPh,
+  Config,
+  tlang
+} = require("../lib/");
+let mtypes = ["imageMessage", "videoMessage", "stickerMessage"];
+smd({
+  cmdname: "sticker",
+  alias: ["s"],
+  info: "Makes sticker of replied image/video.",
+  type: "sticker",
+  filename: __filename,
+  use: "<reply to any image/video.>"
+}, async ctx => {
+  try {
+    let quoted = mtypes.includes(ctx.mtype) ? ctx : ctx.reply_message;
+    if (quoted && mtypes.includes(quoted?.mtype || "need_Media")) {
+      let buffer = await quoted.download();
+      let options = {
+        pack: Config.packname,
+        author: Config.author,
+        type: StickerTypes.FULL,
+        quality: 10
+      };
+      await generateSticker(ctx, buffer, options);
+      return buffer = false;
+    } else {
+      return ctx.reply("*_Uhh Dear, Reply to image/video!!_*");
+    }
+  } catch (err) {
+    return await ctx.error(err + "\n\ncmdName: sticker\n");
+  }
+});
+smd({
+  cmdname: "take",
+  info: "Makes sticker of replied image/video.",
+  type: "sticker",
+  filename: __filename,
+  use: "<reply to sticker.>"
+}, async (ctx, input) => {
+  try {
+    let quoted = ctx.reply_message;
+    if (!quoted || quoted?.mtype != "stickerMessage") {
+      return await ctx.reply("*Uhh Please, Reply to sticker*");
+    }
+    let parts = input.split("|");
+    let pack = parts[0]?.trim() !== "" ? parts[0] : ctx.pushName;
+    let author = parts[1] && parts[1] !== "" ? parts[1] : "sᴜʜᴀɪʟ-ᴍᴅ ♥️";
+    let buffer = await quoted.download();
+    let options = {
+      pack: pack,
+      author: author,
+      type: StickerTypes.FULL,
+      quality: 10
+    };
+    await generateSticker(ctx, buffer, options);
+    return buffer = false;
+  } catch (err) {
+    return await ctx.error(err + "\n\ncmdName: take\n");
+  }
+});
+smd({
+  cmdname: "attp",
+  info: "Makes sticker of given text.",
+  type: "sticker",
+  filename: __filename,
+  use: "< text.>"
+}, async (ctx, input) => {
+  try {
+    let options = await smdBuffer("https://raganork-api.onrender.com/api/attp?text=" + (input ? input : "Please provide text to generate sticker") + "&apikey=with_love_souravkl11");
+    return await generateSticker(ctx, options);
+  } catch (err) {
+    return await ctx.error(err + "\n\ncmdName: attp\n");
+  }
+});
+smd({
+  cmdname: "crop",
+  alias: ["cropsticker"],
+  info: "Makes sticker of replied image.",
+  type: "sticker",
+  filename: __filename,
+  use: "<reply to image.>"
+}, async ctx => {
+  try {
+    let quoted = mtypes.includes(ctx.mtype) ? ctx : ctx.reply_message;
+    if (quoted && mtypes.includes(quoted?.mtype || "need_Media")) {
+      let buffer = await quoted.download();
+      let options = {
+        pack: Config.packname,
+        author: Config.author,
+        type: StickerTypes.CROPPED,
+        quality: 50
+      };
+      await generateSticker(ctx, buffer, options);
+      return buffer = false;
+    } else {
+      return ctx.reply("*_Uhh Dear, Reply to image!!_*");
+    }
+  } catch (err) {
+    return await ctx.error(err + "\n\ncmdName: crop\n", "*_Request Failed, Reply to an image only!_*");
+  }
+});
+smd({
+  cmdname: "circle",
+  alias: ["circlestic", "circlesticker", "cs"],
+  info: "circle sticker of image.",
+  type: "sticker",
+  filename: __filename,
+  use: "<reply to image.>"
+}, async ctx => {
+  try {
+    let quoted = mtypes.includes(ctx.mtype) ? ctx : ctx.reply_message;
+    if (quoted && mtypes.includes(quoted?.mtype || "need_Media")) {
+      let buffer = await quoted.download();
+      let options = {
+        pack: Config.packname,
+        author: Config.author,
+        type: StickerTypes.CIRCLE,
+        quality: 50
+      };
+      await generateSticker(ctx, buffer, options);
+      return buffer = false;
+    } else {
+      return ctx.reply("*_Uhh Dear, Reply to image!!_*");
+    }
+  } catch (err) {
+    return await ctx.error(err + "\n\ncmdName: circle\n", "*_Request Failed, Make sure You replied an image_*");
+  }
+});
+smd({
+  cmdname: "round",
+  alias: ["roundstic", "roundsticker"],
+  info: "Makes sticker of replied image/video.",
+  type: "sticker",
+  filename: __filename,
+  use: "<reply to image.>"
+}, async ctx => {
+  try {
+    let quoted = mtypes.includes(ctx.mtype) ? ctx : ctx.reply_message;
+    if (quoted && mtypes.includes(quoted?.mtype || "need_Media")) {
+      let buffer = await quoted.download();
+      let options = {
+        pack: Config.packname,
+        author: Config.author,
+        type: StickerTypes.ROUNDED,
+        quality: 50
+      };
+      await generateSticker(ctx, buffer, options);
+      return buffer = false;
+    } else {
+      return ctx.reply("*_Uhh Dear, Reply to an image!!_*");
+    }
+  } catch (err) {
+    return await ctx.error(err + "\n\ncmdName: round\n", "*_Request Failed, Make sure You replied an image!_*");
+  }
+});
+smd({
+  cmdname: "wallpaper",
+  info: "To get Random Pics",
+  type: "Anime Pics",
+  filename: __filename
+}, async ctx => {
+  try {
+    const emoji = await (await fetch("https://api.unsplash.com/photos/random?client_id=72utkjatCBC-PDcx7-Kcvgod7-QOFAm2fXwEeW8b8cc"))?.json();
+    const imageUrl = emoji?.urls?.regular || false;
+    if (imageUrl) {
+      await ctx.sendUi(ctx.jid, {
+        caption: "*---Random Wallpapers Here---*"
+      }, {
+        quoted: ctx
+      }, "image", imageUrl);
+    } else {
+      await ctx.send("*_Request Failed, Wallpaper not be fetched!_*");
+    }
+  } catch (err) {
+    return await ctx.error(err + "\n\ncmdName: wallpaper\n");
+  }
+});
+smd({
+  pattern: "memegen",
+  desc: "Write text on quoted image.",
+  category: "sticker",
+  filename: __filename,
+  use: "<text>"
+}, async (ctx, input) => {
+  try {
+    let quoted = pmtypes.includes(ctx.mtype) ? ctx : ctx.reply_message;
+    if (!input) {
+      return await ctx.reply("*please provide text and image*");
+    }
+    if (!quoted || !pmtypes.includes(quoted.mtype)) {
+      return ctx.reply("*Uhh please, Reply to an image*");
+    }
+    let topText = input.split("|")[0] || "";
+    let value = (input.split("|")[1] || "sticker").toLowerCase();
+    let topTextPart = topText.split(";")[0] || "_";
+    let bottomText = topText.split(";")[1] || "_";
+    let imagePath = await ctx.bot.downloadAndSaveMediaMessage(quoted);
+    let imageUrl = await TelegraPh(imagePath);
+    try {
+      fs.unlinkSync(imagePath);
+    } catch (err) {}
+    console.log("match", input);
+    let imageBuffer;
+    try {
+      imageBuffer = await getBuffer("https://api.memegen.link/images/custom/" + topTextPart + "/" + bottomText + ".png?background=" + imageUrl);
+    } catch (err) {
+      // api.memegen.link is answering 503 / dropping the TLS handshake, which surfaced as
+      // "Client network socket disconnected before secure TLS connection was established".
+      return ctx.send("*_Meme generation is unavailable right now_*\n_memegen.link is not responding (" + (err && err.code ? err.code : "network error") + "). Try again shortly._");
+    }
+    if (value?.startsWith("p")) {
+      await ctx.send(imageBuffer, {
+        caption: Config.caption
+      }, "image");
+    }
+    let options = {
+      pack: Config.packname,
+      author: Config.author,
+      type: StickerTypes.FULL,
+      quality: 70
+    };
+    await generateSticker(ctx, imageBuffer, options);
+    return imageBuffer = false;
+  } catch (err) {
+    ctx.error(err + "\n\ncmdName: memegen\n");
+    console.log(err);
+  }
+});
+smd({
+  pattern: "emix",
+  desc: "Mixes two emojies.",
+  category: "sticker",
+  use: "<query>",
+  filename: __filename
+}, async (ctx, input) => {
+  try {
+    let emoji1 = input.split(",")[0] || false;
+    let emoji2 = input.split(",")[1] || false;
+    if (!input || !emoji1 || !emoji2) {
+      return ctx.reply("Example : " + prefix + "emix 😅,🤔");
+    }
+    const response = await fetch("https://tenor.googleapis.com/v2/featured?key=AIzaSyAyimkuYQYF_FXVALexPuGQctUWRURdCYQ&contentfilter=high&media_filter=png_transparent&component=proactive&collection=emoji_kitchen_v5&q=" + emoji1 + "_" + emoji2);
+    // Tenor now answers 403 {"error":{"code":403,"message":"Tenor API is discontinued"}} - the error
+    // body has no `results`, so `mixture.results[0]` threw "Cannot read properties of undefined
+    // (reading '0')" and hid the real reason.
+    if (!response.ok) {
+      return ctx.send("*_Emoji mixing is unavailable:_*\n_Tenor shut down its API (" + response.status + "). No replacement endpoint is reachable from this host._");
+    }
+    const mixture = await response?.json();
+    if (!mixture || !Array.isArray(mixture.results) || mixture.results.length === 0) {
+      return ctx.send("*_Can't create mixture, try other emojies_*");
+    } else {
+      let buffer = await smdBuffer(mixture.results[0].url);
+      let options = {
+        pack: Config.packname,
+        author: Config.author,
+        type: StickerTypes.FULL,
+        quality: 70
+      };
+      await generateSticker(ctx, buffer, options);
+      return buffer = false;
+    }
+  } catch (err) {
+    ctx.error(err + "\n\ncmdName: emix");
+  }
+});
+smd({
+  pattern: "quotely",
+  desc: "Makes Sticker of quoted text.",
+  alias: ["q"],
+  category: "sticker",
+  use: "<reply to any message.>",
+  filename: __filename
+}, async (ctx, input) => {
+  try {
+    let sender = ctx.reply_message ? ctx.reply_message : ctx && input ? ctx : false;
+    let number = ctx.reply_message ? ctx.reply_message.text : input;
+    if (!sender || !number) {
+      return ctx.reply("*_Please quote/reply to any message!!!_*");
+    }
+    let imageUrl = await ctx.getpp(sender.sender);
+    let colors = ["#FFFFFF", "#000000"];
+    let backgroundColor = input === "white" ? colors[0] : input === "black" ? colors[1] : colors[Math.floor(Math.random() * colors.length)];
+    let firstName = ctx.bot.getName(sender.sender);
+    let quotePayload = {
+      type: "quote",
+      format: "png",
+      backgroundColor: backgroundColor,
+      width: 512,
+      height: 512,
+      scale: 3,
+      messages: [{
+        avatar: true,
+        from: {
+          first_name: firstName,
+          language_code: "en",
+          name: firstName,
+          photo: {
+            url: imageUrl
+          }
+        },
+        text: number,
+        replyMessage: {}
+      }]
+    };
+    let response = await axios.post("https://bot.lyo.su/quote/generate", quotePayload);
+    if (!response || response.status !== 200 || !response.data || !response.data.ok) {
+      return await ctx.send("*_Can't create quote sticker!_*");
+    }
+    let jid = Buffer.alloc(response.data.result.image.length, response.data.result.image, "base64");
+    try {
+      await ctx.send(jid, {
+        packname: Config.packname,
+        author: "Suhail-Md"
+      }, "sticker");
+    } catch (err) {
+      console.log("error in quotely : ", err);
+      let options = {
+        pack: Config.packname,
+        author: Config.author,
+        type: StickerTypes.FULL,
+        quality: 70
+      };
+      return await generateSticker(ctx, jid, options);
+    }
+  } catch (err) {
+    return await ctx.error(err + "\n\ncmdName: emix", err);
+  }
+});
+smd({
+  pattern: "fancy",
+  desc: "Makes stylish/fancy given text",
+  category: "converter",
+  use: "56 Suhail",
+  filename: __filename
+}, async (ctx, input) => {
+  try {
+    let jid = "┏━━━━━━━━━━━━━━━━━━━━━━━━\n┃\t*💬SUHAIL-MD_FANCY_TEXT💬* \n┗━━━━━━━━━━━━━━━━━━━━━━━━\n\n " + (input ? "```🔢Reply the number you wants to select``` \n\n" : "```\t\t" + prefix + "fancy Suhail(For all text)\n\t\t" + prefix + "fancy 25 Suhail(For specific text)```\n\n");
+    let styleNumber = parseInt(input);
+    if (isNaN(styleNumber)) {
+      let styleText = input ? input : "Suhail";
+      listall(styleText).forEach((item, index) => {
+        jid += "\n" + (index += 1) + " " + item + "\n";
+      });
+      try {
+        return await ctx.send(jid, {
+          caption: jid
+        }, "", msg);
+      } catch {
+        return await ctx.reply(jid);
+      }
+    }
+    let replyText = await fancytext("" + input.slice(2), styleNumber);
+    return await ctx.send(replyText, {}, "", ctx);
+  } catch (err) {
+    return await ctx.error(err + "\n\ncmdName: fancy", err);
+  }
+});
+smd({
+  pattern: "styly",
+  desc: "Downloads wikimedia images.",
+  category: "converter",
+  filename: __filename,
+  use: "<text|search.>"
+}, async (ctx, input) => {
+  try {
+    let fancyList = input.trim();
+    let menu = "┏━━━━━━━━━━━━━━━━━━━━━━━━\n┃\t*💬SUHAIL-MD_FANCY_TEXT💬* \n┗━━━━━━━━━━━━━━━━━━━━━━━━\n\n " + (fancyList ? "```🔢Reply the number you wants to select``` \n\n" : "```\t\t" + prefix + "styly Suhail(For all text)\n\t\t" + prefix + "styly 19 Suhail(For specific text)```\n\n");
+    let {
+      styletext: listAll
+    } = require("../lib/scraper");
+    let style = fancyList ? parseInt(fancyList) : "";
+    fancyList = style && !isNaN(style) ? fancyList.slice(2) : fancyList;
+    let list = (await listAll(fancyList ? fancyList : "Suhail")) || [];
+    if (!list || !list[0]) {
+      return await ctx.send("*_No Results Found!_*");
+    }
+    let menuFooter = "";
+    if (isNaN(style) || style > list.length || style < 0 || !fancyList) {
+      for (let index = 0; index < list.length; index++) {
+        menuFooter += "\n" + index + " " + list[index].result + " " + (fancyList.length > 50 ? "\n\n" : "");
+      }
+      return await ctx.send(menu + menuFooter);
+    }
+    return await ctx.send(list[style].result, {}, "", ctx);
+  } catch (err) {
+    ctx.error(err + "\n\ncommand: styly", err);
+  }
+});
+smd({
+  pattern: "tiny",
+  desc: "Makes url tiny.",
+  category: "converter",
+  use: "<url>",
+  react: "✅",
+  filename: __filename
+}, async (ctx, input) => {
+  try {
+    if (!input || !input.toLowerCase().includes("https")) {
+      return ctx.reply("Provide me a link");
+    }
+    let longUrl = input.split(" ")[0];
+    let response = await axios.get("https://tinyurl.com/api-create.php?url=" + longUrl);
+    ctx.reply("*🛡️Your Shortened URL*\n\n" + response.data);
+  } catch (err) {
+    ctx.error(err + "\n\ncmdName: tiny", err, false);
+  }
+});
+smd({
+  pattern: "fliptext",
+  desc: "Flips given text.",
+  category: "converter",
+  use: "<query>",
+  filename: __filename
+}, async (ctx, input) => {
+  try {
+    let userInput = input ? input : ctx.reply_text;
+    if (!userInput) {
+      return ctx.reply("*_Example : " + prefix + "fliptext Suhail MD!_*");
+    }
+    let flipReply = userInput.split("").reverse().join("");
+    await ctx.reply("*「  Text Flipper Tool  」* \n*IGiven text :*\n" + userInput + "\n\n*Fliped text :*\n" + flipReply);
+  } catch (err) {
+    ctx.error(err + "\n\ncommand : fliptext", err);
+  }
+});
+smd({
+  pattern: "ebinary",
+  desc: "encode binary",
+  category: "converter",
+  use: "<query>",
+  filename: __filename
+}, async (ctx, input) => {
+  try {
+    let userInput = input ? input : ctx.reply_text;
+    if (!userInput) {
+      return ctx.reply("*_Send text to be encoded.!_*");
+    }
+    let flippedText = userInput.split("").map(item => {
+      return item.charCodeAt(0).toString(2);
+    }).join(" ");
+    await ctx.reply(flippedText);
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand : ebinary", err);
+  }
+});
+smd({
+  pattern: "dbinary",
+  desc: "decode binary",
+  category: "converter",
+  use: "<query>",
+  filename: __filename
+}, async (ctx, input) => {
+  try {
+    let userInput = input ? input : ctx.reply_text;
+    if (!userInput) {
+      return ctx.reply("Send text to be decoded.");
+    }
+    var binaryChars = userInput.split(" ");
+    var decoded = [];
+    for (i = 0; i < binaryChars.length; i++) {
+      decoded.push(String.fromCharCode(parseInt(binaryChars[i], 2)));
+    }
+    await ctx.reply(decoded.join(""));
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand : dbinary", err);
+  }
+});
+smd({
+  pattern: "qr",
+  category: "converter",
+  filename: __filename,
+  use: "< text >",
+  desc: "Sends CitelsVoid Qr code to scan and get your session id."
+}, async (ctx, input) => {
+  try {
+    if (!input) {
+      return ctx.reply("*Provide Text To generate QR!*");
+    }
+    let quoted = "https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=" + text;
+    await ctx.bot.sendUi(ctx.jid, {
+      caption: "*_Scan Qr To Get You Text_*"
+    }, {
+      quoted: ctx
+    }, "image", quoted);
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand : qr", err);
+  }
+});
+smd({
+  pattern: "paste",
+  desc: "create paste of text.",
+  category: "converter",
+  use: "< text >",
+  filename: __filename
+}, async (ctx, input) => {
+  try {
+    let telegraph = input ? input : ctx.reply_text;
+    let {
+      data: response
+    } = await axios.get("https://api.telegra.ph/createPage?access_token=d3b25feccb89e508a9114afb82aa421fe2a9712b963b387cc5ad71e58722&title=Suhail-Md+Bot&author_name=Suhail_Tech_Info&content=[%7B\"tag\":\"p\",\"children\":[\"" + telegraph.replace(/ /g, "+") + "\"]%7D]&return_content=true");
+    return ctx.reply("*Paste created on telegraph*\nName:-" + util.format(response.result.title) + " \nUrl:- " + util.format(response.result.url));
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand: paste ", err, false);
+  }
+});
+let pmtypes = ["imageMessage", "stickerMessage"];
+smd({
+  cmdname: "photo",
+  info: "Makes photo of replied sticker.",
+  type: "converter",
+  use: "<reply to any gif>",
+  filename: __filename
+}, async ctx => {
+  try {
+    let quoted = pmtypes.includes(ctx.mtype) ? ctx : ctx.reply_message;
+    if (!quoted || !pmtypes.includes(quoted?.mtype)) {
+      return ctx.reply("*_Uhh Dear, Reply to Any Sticker.!!_*");
+    }
+    let url = await ctx.bot.downloadAndSaveMediaMessage(quoted);
+    await ctx.bot.sendMessage(ctx.jid, {
+      image: {
+        url: url
+      },
+      mimetype: "image/jpeg"
+    });
+    try {
+      fs.unlinkSync(url);
+    } catch (err) {}
+  } catch (err) {
+    ctx.error(err + "\n\ncmdName: photo\n", err, false);
+  }
+});
+let audtypes = ["audioMessage", "videoMessage"];
+smd({
+  pattern: "toaudio",
+  alias: ["mp3", "tomp3"],
+  desc: "changes type to audio.",
+  category: "converter",
+  use: "<reply to any Video>",
+  filename: __filename
+}, async ctx => {
+  try {
+    let quoted = audtypes.includes(ctx.mtype) ? ctx : ctx.reply_message;
+    if (!quoted || !audtypes.includes(quoted?.mtype)) {
+      return ctx.reply("*_Uhh Dear, Reply to Any Video.!!_*");
+    }
+    let audioPath = await ctx.bot.downloadAndSaveMediaMessage(quoted);
+    const {
+      toAudio: toBuffer
+    } = require("../lib");
+    let audioData = fs.readFileSync(audioPath);
+    let audioBuffer = await toBuffer(audioData);
+    try {
+      fs.unlink(audioPath);
+    } catch (err) {}
+    return await ctx.bot.sendMessage(ctx.jid, {
+      audio: audioBuffer,
+      mimetype: "audio/mpeg"
+    });
+  } catch (err) {
+    ctx.error(err + "\n\ncmdName: toaudio", err);
+  }
+});
+smd({
+  pattern: "voice",
+  alias: ["ptt", "toptt"],
+  desc: "adds bass in given sound",
+  category: "converter",
+  use: "<reply to any audio>"
+}, async ctx => {
+  try {
+    let quoted = audtypes.includes(ctx.mtype) ? ctx : ctx.reply_message;
+    if (!quoted || !audtypes.includes(quoted?.mtype)) {
+      return ctx.reply("*_Uhh Please, Reply to audio/video_*");
+    }
+    let audio = await quoted.download();
+    return await ctx.bot.sendMessage(ctx.jid, {
+      audio: audio,
+      mimetype: "audio/mpeg",
+      ptt: true
+    }, {
+      quoted: ctx
+    });
+  } catch (err) {
+    ctx.error(err + "\n\ncmdName: voice", err);
+  }
+});
+smd({
+  pattern: "tomp4",
+  alias: ["mp4", "tovideo"],
+  desc: "convert sticker to mp4.",
+  category: "converter",
+  use: "<reply to any Video>",
+  filename: __filename
+}, async ctx => {
+  let quoted = ctx.mtype === "videoMessage" ? ctx : ctx.reply_message;
+  if (!quoted) {
+    return ctx.reply("*_Uhh Dear, Reply To Animated Sticker or Gif!!_*");
+  }
+  const {
+    webp2mp4File: ffancy
+  } = require("../lib");
+  let mimetype = quoted?.mimetype || "";
+  if (quoted?.mtype != "videoMessage" && !/webp/.test(mimetype)) {
+    return await ctx.send("*Damn... Reply To An Animated Sticker or Gif *");
+  }
+  let input = await ctx.bot.downloadAndSaveMediaMessage(quoted);
+  try {
+    try {
+      if (/webp/.test(mimetype)) {
+        let response = await ffancy(input);
+        input = response.result;
+      }
+    } catch (err) {
+      console.log("error while converting sticker to mp4\n", err);
+    }
+    await ctx.bot.sendMessage(ctx.jid, {
+      video: {
+        url: input
+      },
+      caption: Config.caption
+    });
+    try {
+      await fs.unlink(input);
+    } catch (err) {}
+  } catch (err) {
+    ctx.error(err + "\n\ncmdName: tomp4", err);
+  }
+});
+function splitTextIntoLines(input, ctx, maxWidth) {
+  const words = input.split(" ");
+  const lines = [];
+  let line = "";
+  for (const word of words) {
+    const candidate = line === "" ? word : line + " " + word;
+    const textWidth = ctx.measureText(candidate).width;
+    if (textWidth <= maxWidth) {
+      line = candidate;
+    } else {
+      lines.push(line);
+      line = word;
+    }
+  }
+  if (line !== "") {
+    lines.push(line);
+  }
+  return lines;
+}
+smd({
+  cmdname: "ttp",
+  alias: ["roundstic", "roundsticker"],
+  info: "Makes sticker of replied image/video.",
+  type: "sticker",
+  filename: __filename,
+  use: "<reply to image.>"
+}, async (ctx, input) => {
+  try {
+    let userInput = input || ctx.reply_text;
+    if (userInput) {
+      let fontSize = parseInt(userInput) || "";
+      if (fontSize && !isNaN(fontSize)) {
+        userInput = await fancytext("" + userInput.slice(2), fontSize);
+      }
+      const {
+        createCanvas: createCanvas
+      } = require("canvas");
+      const fsModule = require("fs");
+      const width = 300;
+      const height = 300;
+      const outPath = "./temp/ttp.png";
+      const canvas = createCanvas(width, height);
+      const canvasCtx = canvas.getContext("2d");
+      canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
+      canvasCtx.font = "20px Arial";
+      canvasCtx.fillStyle = "black";
+      canvasCtx.textAlign = "center";
+      const maxWidth = width - 20;
+      const lines = splitTextIntoLines(userInput, canvasCtx, maxWidth);
+      const startX = lines.length * 25;
+      const lineY = (height - startX) / 2;
+      lines.forEach((item, index) => {
+        const textY = lineY + index * 25;
+        canvasCtx.fillText(item, width / 2, textY);
+      });
+      const pngStream = canvas.createPNGStream();
+      const writeStream = fsModule.createWriteStream(outPath);
+      pngStream.pipe(writeStream);
+      writeStream.on("finish", async () => {
+        console.log("Image created:", outPath);
+        let buffer = fsModule.readFileSync(outPath);
+        let options = {
+          pack: Config.packname,
+          author: Config.author,
+          type: StickerTypes.ROUNDED,
+          quality: 50
+        };
+        await generateSticker(ctx, buffer, options);
+        return buffer = false;
+      });
+    } else {
+      return ctx.reply("*_Uhh Dear, provide text, ex .ttp 4 hii im suhail!!_*");
+    }
+  } catch (err) {
+    return await ctx.error(err + "\n\ncmdName: ttp\n");
+  }
+});
+
+/*
+{
+   pattern: "converter",
+   type: "notes",
+}
+*/

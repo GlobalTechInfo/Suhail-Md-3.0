@@ -1,0 +1,221 @@
+/**
+//══════════════════════════════════════════════════════════════════════════════════════════════════════//
+//                                                                                                      //
+//                                ＷＨＡＴＳＡＰＰ ＢＯＴ－ＭＤ ＢＥＴＡ                                   //
+//                                                                                                      // 
+//                                         Ｖ：1．2．8                                                   // 
+//                                                                                                      // 
+//            ███████╗██╗   ██╗██╗  ██╗ █████╗ ██╗██╗         ███╗   ███╗██████╗                        //
+//            ██╔════╝██║   ██║██║  ██║██╔══██╗██║██║         ████╗ ████║██╔══██╗                       //
+//            ███████╗██║   ██║███████║███████║██║██║         ██╔████╔██║██║  ██║                       //
+//            ╚════██║██║   ██║██╔══██║██╔══██║██║██║         ██║╚██╔╝██║██║  ██║                       //
+//            ███████║╚██████╔╝██║  ██║██║  ██║██║███████╗    ██║ ╚═╝ ██║██████╔╝                       //
+//            ╚══════╝ ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝╚══════╝    ╚═╝     ╚═╝╚═════╝                        //
+//                                                                                                      //
+//                                                                                                      //
+//                                                                                                      //
+//══════════════════════════════════════════════════════════════════════════════════════════════════════//
+*
+   * @project_name : Suhail-Md
+   * @author : Suhail Tech Info
+   * @youtube : https://www.youtube.com/@SuhailTechInfo
+   * @description : Suhail-Md ,A Multi-functional whatsapp user bot.
+   * @version 1.2.8
+*
+* 
+   * Created By Suhail Tech Info.
+   * © 2024 Suhail-Md.
+*/
+
+let Suhail_Md = "Suhail MD Whatsapp bot md";
+const Config = require("../config");
+let {
+  smd,
+  lang,
+  textToLogoGenerator,
+  prefix
+} = require("../lib");
+smd({
+  cmdname: "slice",
+  type: "logo",
+  info: "Some text to image feature with various styles.",
+  filename: __filename
+}, async (ctx, text, {
+  cmdName: cmdName
+}) => {
+  try {
+    if (!text) {
+      return ctx.reply("*_Example : " + (prefix + cmdName) + " Suhail_*");
+    }
+    return await textToLogoGenerator(ctx, "create-light-glow-sliced-text-effect-online-1068", text);
+  } catch (err) {
+    return await ctx.error(err + "\n\ncmdName: " + cmdName, err);
+  }
+});
+smd({
+  cmdname: "glow",
+  type: "logo",
+  info: "Some text to image feature with various styles.",
+  filename: __filename
+}, async (ctx, text, {
+  cmdName: cmdName
+}) => {
+  try {
+    if (!text) {
+      return ctx.reply("*_Example : " + (prefix + cmdName) + " Suhail_*");
+    }
+    return await textToLogoGenerator(ctx, "free-advanced-glow-text-effect-873", text);
+  } catch (err) {
+    return await ctx.error(err + "\n\ncmdName: " + cmdName, err);
+  }
+});
+smd({
+  cmdname: "gitch1",
+  type: "logo",
+  info: "Some text to image feature with various styles.",
+  filename: __filename
+}, async (ctx, text, {
+  cmdName: cmdName
+}) => {
+  try {
+    if (!text) {
+      return ctx.reply("*_Example : " + (prefix + cmdName) + " Suhail_*");
+    }
+    return await textToLogoGenerator(ctx, "create-impressive-glitch-text-effects-online-1027", text);
+  } catch (err) {
+    return await ctx.error(err + "\n\ncmdName: " + cmdName, err);
+  }
+});
+smd({
+  cmdname: "steal",
+  type: "logo",
+  info: "Some text to image feature with various styles.",
+  filename: __filename
+}, async (ctx, text, {
+  cmdName: cmdName
+}) => {
+  try {
+    let from = text ? text.split(";")[0] : "";
+    let to = text ? text.split(";")[1] : "";
+    if (!to || !from) {
+      return await ctx.reply("*_Example : " + (prefix + cmdName) + " text1;text2_*");
+    }
+    return await textToLogoGenerator(ctx, "3d-steel-text-effect-877", from, to);
+  } catch (err) {
+    return await ctx.error(err + "\n\ncmdName: " + cmdName, err);
+  }
+});
+smd({
+  cmdname: "avenger",
+  type: "logo",
+  info: "Some text to image feature with various styles.",
+  filename: __filename
+}, async (ctx, text, {
+  cmdName: cmdName
+}) => {
+  try {
+    let from = text ? text.split(";")[0] : "";
+    let to = text ? text.split(";")[1] : "";
+    if (!to || !from) {
+      return await ctx.reply("*_Example : " + (prefix + cmdName) + " text1;text2_*");
+    }
+    return await textToLogoGenerator(ctx, "create-3d-avengers-logo-online-974", from, to);
+  } catch (err) {
+    return await ctx.error(err + "\n\ncmdName: " + cmdName, err);
+  }
+});
+smd({
+  cmdname: "marvel",
+  type: "logo",
+  info: "Some text to image feature with various styles.",
+  filename: __filename
+}, async (ctx, text, {
+  cmdName: cmdName
+}) => {
+  try {
+    let from = text ? text.split(";")[0] : "";
+    let to = text ? text.split(";")[1] : "";
+    if (!to || !from) {
+      return await ctx.reply("*_Example : " + (prefix + cmdName) + " text1;text2_*");
+    }
+    return await textToLogoGenerator(ctx, "create-logo-style-marvel-studios-ver-metal-972", from, to);
+  } catch (err) {
+    return await ctx.error(err + "\n\ncmdName: " + cmdName, err);
+  }
+});
+smd({
+  cmdname: "phub",
+  type: "logo",
+  info: "Some text to image feature with various styles.",
+  filename: __filename
+}, async (ctx, text, {
+  cmdName: cmdName
+}) => {
+  try {
+    let from = text ? text.split(";")[0] : "";
+    let to = text ? text.split(";")[1] : "";
+    if (!to || !from) {
+      return await ctx.reply("*_Example : " + (prefix + cmdName) + " text1;text2_*");
+    }
+    return await textToLogoGenerator(ctx, "pornhub-style-logo-online-generator-free-977", from, to);
+  } catch (err) {
+    return await ctx.error(err + "\n\ncmdName: " + cmdName, err);
+  }
+});
+smd({
+  cmdname: "glitch",
+  type: "logo",
+  info: "Some text to image feature with various styles.",
+  filename: __filename
+}, async (ctx, text, {
+  cmdName: cmdName
+}) => {
+  try {
+    let from = text ? text.split(";")[0] : "";
+    let to = text ? text.split(";")[1] : "";
+    if (!to || !from) {
+      return await ctx.reply("*_Example : " + (prefix + cmdName) + " text1;text2_*");
+    }
+    return await textToLogoGenerator(ctx, "create-glitch-text-effect-style-tik-tok-983", from, to);
+  } catch (err) {
+    return await ctx.error(err + "\n\ncmdName: " + cmdName, err);
+  }
+});
+smd({
+  cmdname: "glitch2",
+  type: "logo",
+  info: "Some text to image feature with various styles.",
+  filename: __filename
+}, async (ctx, text, {
+  cmdName: cmdName
+}) => {
+  try {
+    let from = text ? text.split(";")[0] : "";
+    let to = text ? text.split(";")[1] : "";
+    if (!to || !from) {
+      return await ctx.reply("*_Example : " + (prefix + cmdName) + " text1;text2_*");
+    }
+    return await textToLogoGenerator(ctx, "create-a-glitch-text-effect-online-free-1026", from, to);
+  } catch (err) {
+    return await ctx.error(err + "\n\ncmdName: " + cmdName, err);
+  }
+});
+smd({
+  cmdname: "grafiti",
+  type: "logo",
+  info: "Some text to image feature with various styles.",
+  filename: __filename
+}, async (ctx, text, {
+  cmdName: cmdName
+}) => {
+  try {
+    let from = text ? text.split(";")[0] : "";
+    let to = text ? text.split(";")[1] : "";
+    if (!to || !from) {
+      return await ctx.reply("*_Example : " + (prefix + cmdName) + " text1;text2_*");
+    }
+    return await textToLogoGenerator(ctx, "create-a-cool-graffiti-text-on-the-wall-1010", from, to);
+  } catch (err) {
+    return await ctx.error(err + "\n\ncmdName: " + cmdName, err);
+  }
+});

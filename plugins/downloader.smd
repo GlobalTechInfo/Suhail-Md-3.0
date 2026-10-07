@@ -1,0 +1,1420 @@
+const {
+  tlang,
+  ringtone,
+  smd,
+  fetchJson,
+  smdJson,
+  Insta,
+  getRandom,
+  tiny,
+  fancytext,
+  yt,
+  sleep,
+  botpic,
+  getBuffer,
+  smdBuffer,
+  pinterest,
+  prefix,
+  Config,
+  mediafire,
+  GDriveDl
+} = require(lib_dir);
+const {
+  search,
+  download
+} = require("aptoide-scraper");
+const googleTTS = require("google-tts-api");
+const ytdl = require("ytdl-secktor");
+const yts = require("secktor-pack");
+const cheerio = require("cheerio");
+const fs = require("fs-extra");
+const axios = require("axios");
+const fetch = require("node-fetch");
+var videotime = 2000;
+var dlsize = 400;
+const {
+  cmd
+} = require(lib_dir + "/plugins");
+smd({
+  pattern: "tgs",
+  desc: "Downloads telegram stickers.",
+  category: "downloader",
+  filename: __filename,
+  use: "<add sticker url.>"
+}, async (ctx, text) => {
+  try {
+    if (!text) {
+      return await ctx.reply("_Enter a tg sticker url_\nEg: .tgs https://t.me/addstickers/Oldboyfinal\nKeep in mind that there is a chance of ban if used frequently");
+    }
+    if (!text.includes("addstickers")) {
+      return await ctx.reply("_Uhh Please Enter a Valid tg sticker url_\nEg: .tgs https://t.me/addstickers/Oldboyfinal");
+    }
+    let stickerUrl = text.split("|")[0];
+    let packName = stickerUrl.split("/addstickers/")[1];
+    let {
+      result: stickers
+    } = await fetchJson("https://api.telegram.org/bot891038791:AAHWB1dQd-vi0IbH2NjKYUk-hqQ8rQuzPD4/getStickerSet?name=" + encodeURIComponent(packName) + " ");
+    let options = text.split("|")[1] || "";
+    let infoText2 = "Total stickers: " + stickers.stickers.length + "\n*Estimated complete in:* " + stickers.stickers.length * 1.5 + " seconds\nKeep in mind that there is a chance of a ban if used frequently";
+    if (stickers.is_animated) {
+      return await ctx.reply("Animated stickers are not supported");
+    } else if (options.startsWith("info")) {
+      return await ctx.reply(infoText2);
+    }
+    let toIndex = parseInt(options.split(",")[0]) || 10;
+    let fromIndex = parseInt(options.split(",")[1]) || 0;
+    let packName2 = options.split(";")[1] || "Sticker";
+    let isPhoto = true;
+    if (packName2.includes("photo")) {
+      isPhoto = false;
+      packName2 = "Photo";
+    }
+    if (toIndex > stickers.stickers.length) {
+      toIndex = stickers.stickers.length;
+    }
+    if (fromIndex > stickers.stickers.length) {
+      fromIndex = stickers.stickers.length - 5;
+    }
+    if (fromIndex > toIndex) {
+      let toIndex2 = toIndex;
+      toIndex = fromIndex;
+      fromIndex = toIndex2;
+    }
+    await ctx.reply(infoText2 + "\n\n_Downloading as " + packName2 + " From index *" + fromIndex + "* to *" + toIndex + "*._\nIf you wants more to download then use Like \n\n .tgs " + stickerUrl + " |  10 ,  20 ; photo");
+    for (fromIndex; fromIndex < toIndex; fromIndex++) {
+      let response = await fetchJson("https://api.telegram.org/bot891038791:AAHWB1dQd-vi0IbH2NjKYUk-hqQ8rQuzPD4/getFile?file_id=" + stickers.stickers[fromIndex].file_id);
+      let fileUrl = "https://api.telegram.org/file/bot891038791:AAHWB1dQd-vi0IbH2NjKYUk-hqQ8rQuzPD4/" + response.result.file_path;
+      if (isPhoto) {
+        let buffer = await getBuffer(fileUrl);
+        await ctx.reply(buffer, {
+          packname: Config.packname,
+          author: "Suhail-Md"
+        }, "sticker");
+      } else {
+        await ctx.bot.sendMessage(ctx.chat, {
+          image: {
+            url: fileUrl
+          },
+          caption: "*_Telegram Sticker At Index " + (fromIndex + 1) + " Downloaded_*"
+        });
+      }
+    }
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand: tgs", err, "*_Error Sending telegram stickers!!!_*");
+  }
+});
+smd({
+  pattern: "wikimedia",
+  desc: "Downloads wikimedia images.",
+  category: "downloader",
+  filename: __filename,
+  use: "<text|search.>"
+}, async (ctx, text) => {
+  try {
+    if (!text) {
+      return await ctx.send("*_Please Give me search query!_*");
+    }
+    let {
+      wikimedia: unavailable
+    } = require(lib_dir);
+    let result = (await unavailable(text)) || [];
+    if (!result || !result[0]) {
+      return await ctx.send("*_No Results Found!_*");
+    }
+    let flag = ctx.iscreator && text.split("|")[1] === "all" ? result.length : result.length > 5 ? 5 : result.length;
+    for (let i = 0; i < flag; i++) {
+      try {
+        ctx.bot.sendFromUrl(ctx.from, result[i].image, "Title: " + result[i].title + "\n*Source:* " + result[i].source, ctx, {}, "image");
+      } catch {}
+    }
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand: insta", err);
+  }
+});
+smd({
+  pattern: "facebook",
+  alias: ["fb", "fbdl", "fbb"],
+  desc: "Downloads fb videos.",
+  category: "downloader",
+  filename: __filename,
+  use: "<add fb url.>"
+}, async (ctx, text) => {
+  try {
+    let fbUrl = text.split(" ")[0].trim();
+    if (!fbUrl || !fbUrl.startsWith("https://")) {
+      return await ctx.send("*_Please Give me Facebook Video Url_*\n*Example _" + prefix + "fb https://www.facebook.com/watch/?v=2018727118289093_*");
+    }
+    try {
+      let response = await smdJson(api_smd + "/api/fb?url=" + fbUrl);
+      if (!response || !response.status || !response.result) {
+        throw "*Invalid Video Url!*";
+      }
+      return await ctx.bot.sendMessage(ctx.chat, {
+        video: {
+          url: response.result.urls[0].url
+        },
+        caption: Config.caption
+      }, {
+        quoted: ctx
+      });
+    } catch (err) {
+      let firstArg = text.split(" ")[0];
+      let secondArg = text.split(" ")[1];
+      let mediaType = ["img", "pic", "photo", "image"].includes(secondArg) ? "image" : "video";
+      const {
+        data: appInfo
+      } = await axios.get("https://tools.betabotz.eu.org/tools/facebookdl?url=" + firstArg);
+      if (!appInfo || !appInfo.result) {
+        return ctx.send("*_Video not found!_*");
+      }
+      return await ctx.send(appInfo.result.HD, {
+        caption: Config.caption
+      }, "video");
+    }
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand: facebook", err, "*_video not Found!!!_*");
+  }
+});
+smd({
+  pattern: "apk",
+  alias: ["modapk"],
+  desc: "Downloads apks  .",
+  category: "downloader",
+  filename: __filename,
+  use: "<add sticker url.>"
+}, async (ctx, text) => {
+  try {
+    if (!text) {
+      return ctx.reply("*_Uhh dear, Give me App Name!_*");
+    }
+    let results = await search(text);
+    let app = {};
+    if (results.length) {
+      app = await download(results[0].id);
+    } else {
+      return ctx.reply("*_Apk not found, Try another name!!_*");
+    }
+    const size = parseInt(app.size);
+    if (size > 200) {
+      return ctx.reply("❌ File size bigger than 200mb.");
+    }
+    const dllink = app.dllink;
+    let mediaUrl = await fancytext("『 *ᗩᑭᏦ  ᗞᝪᗯᑎしᝪᗩᗞᗴᖇ* 』\n\n*APP Name :* " + app.name + "\n*App Id :* " + app.package + "\n*Last Up :* " + app.lastup + "\n*App Size :* " + app.size + "\n\n\n " + Config.caption, 25);
+    const fileName = (app?.name || "Downloader") + ".apk";
+    const filePath = "temp/" + fileName;
+    const stickerMeta = {
+      caption: mediaUrl
+    };
+    let stickersBuffer = await ctx.reply(app.icon, stickerMeta, "img", ctx);
+    axios.get(dllink, {
+      responseType: "stream"
+    }).then(result => {
+      const writeStream = fs.createWriteStream(filePath);
+      result.data.pipe(writeStream);
+      return new Promise((resolve, reject) => {
+        writeStream.on("finish", resolve);
+        writeStream.on("error", reject);
+      });
+    }).then(() => {
+      let apkReply = {
+        document: fs.readFileSync(filePath),
+        mimetype: "application/vnd.android.package-archive",
+        fileName: fileName
+      };
+      const stickerReply2 = {
+        quoted: stickersBuffer
+      };
+      ctx.bot.sendMessage(ctx.jid, apkReply, stickerReply2);
+      try {
+        fs.unlink(filePath);
+      } catch {}
+    }).catch(err => {
+      try {
+        fs.unlink(filePath);
+      } catch {}
+      ;
+      ctx.reply("*_Apk not Found, Sorry_*");
+    });
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand: apk", err, "*_Apk not Found!_*");
+  }
+});
+cmd({
+  pattern: "apks",
+  alias: ["apksearch"],
+  desc: "Search App",
+  category: "downloader",
+  filename: __filename,
+  use: "<Search Query>"
+}, async (ctx, text) => {
+  try {
+    if (!text) {
+      return await ctx.reply("*_Uhh pLease, give me app name!_*");
+    }
+    const results = await search(text);
+    if (results.length) {
+      let buffer = await download(results[0].id);
+      let apkList = "*sᴜʜᴀɪʟ-ᴍᴅ • ᴀᴘᴋ ᴅᴏᴡɴʟᴏᴀᴅ ʟɪsᴛ* \n*________________________________* \n\n*_Reply Any Number To Download._*\n_Results For : " + text + "_ \n";
+      for (let i = 0; i < results.length; i++) {
+        apkList += "\n*" + (i + 1) + " : " + results[i].name + "* \n*Id : " + results[i].id + "* \n";
+      }
+      return await ctx.sendMessage(ctx.chat, {
+        image: {
+          url: buffer.icon
+        },
+        caption: apkList
+      }, {
+        quoted: ctx
+      });
+    } else {
+      return ctx.reply("*_APP not Found, Try Other Name_*");
+    }
+  } catch (err) {
+    ctx.error(err + "\n\ncommand: apks", err);
+  }
+});
+smd({
+  pattern: "gitclone",
+  desc: "Downloads apks  .",
+  category: "downloader",
+  filename: __filename,
+  use: "<add sticker url.>"
+}, async (ctx, text) => {
+  try {
+    let gitText = text ? text : ctx.reply_message ? ctx.reply_message.text : "";
+    if (!text) {
+      return await ctx.reply("*Provide Repo Url, _.gitclone https://github.com/SuhailTechInfo/Suhail-Md_*");
+    }
+    const gitPattern = /(?:https|git)(?::\/\/|@)github\.com[\/:]([^\/:]+)\/(.+)/i;
+    if (!gitPattern.test(text)) {
+      return await ctx.reply("*Provide Valid Repositry Url*");
+    }
+    let [protocol, repo, file] = text.match(gitPattern) || [];
+    file = file.replace(/.git$/, "");
+    let rawUrl = "https://api.github.com/repos/" + repo + "/" + file + "/zipball";
+    let response = (await fetch(rawUrl, {
+      method: "HEAD"
+    })).headers.get("content-disposition").match(/attachment; filename=(.*)/)[1];
+    const githubOptions = {
+      url: rawUrl
+    };
+    await ctx.bot.sendMessage(ctx.jid, {
+      document: githubOptions,
+      fileName: response,
+      mimetype: "application/zip"
+    });
+  } catch (err) {
+    return ctx.error(err + "\n\ncommand: gitclone", err, "*_File not found!!!_*");
+  }
+});
+const ytIdRegex = /(?:http(?:s|):\/\/|)(?:(?:www\.|)youtube(?:\-nocookie|)\.com\/(?:watch\?.*(?:|\&)v=|embed|shorts\/|v\/)|youtu\.be\/)([-_0-9A-Za-z]{11})/;
+smd({
+  pattern: "tts",
+  desc: "text to speech.",
+  category: "downloader",
+  filename: __filename,
+  use: "<Hii,this is Suhail>"
+}, async (ctx, text) => {
+  try {
+    let ttsText = ctx.reply_text ? ctx.reply_text : text;
+    if (!ttsText) {
+      return ctx.reply("*_Example : .tts Hi,I am Suhail-Md whatsapp bot._*");
+    }
+    try {
+      let lang = text ? text.split(" ")[0].toLowerCase() : "en";
+      const ttsUrl = googleTTS.getAudioUrl(ttsText, {
+        lang: lang,
+        slow: true,
+        host: "https://translate.google.com"
+      });
+      const ttsMsg = {
+        url: ttsUrl
+      };
+      await ctx.bot.sendMessage(ctx.jid, {
+        audio: ttsMsg,
+        mimetype: "audio/mpeg",
+        ptt: true,
+        fileName: "Suhail-Md-tts.m4a"
+      }, {
+        quoted: ctx
+      });
+    } catch (err) {
+      const ttsUrl2 = googleTTS.getAudioUrl(ttsText, {
+        lang: "en",
+        slow: true,
+        host: "https://translate.google.com"
+      });
+      const ttsMsg3 = {
+        url: ttsUrl2
+      };
+      await ctx.bot.sendMessage(ctx.jid, {
+        audio: ttsMsg3,
+        mimetype: "audio/mpeg",
+        ptt: true,
+        fileName: "Suhail-Md-tts.m4a"
+      }, {
+        quoted: ctx
+      });
+    }
+  } catch (err) {
+    return ctx.error(err + "\n\ncommand: tts", err, false);
+  }
+});
+// Instagram downloader. Replaces the old .downmp4, which only echoed back whatever URL it was given.
+//
+// The API answers with a flat `data` array of {title, url}. Titles are "Download Video",
+// "Download Thumbnail", or "Download Image" (a carousel returns one entry per image, and how many
+// arrives varies - 1 to 5+), so nothing is positional: every entry is classified by its title and
+// each one is sent independently. A single empty/!http entry is skipped, never aborting the rest.
+const IG_API = "https://api.qasimdev.dpdns.org/api/instagram/download";
+const IG_KEY = "qasim-dev";
+const IG_ATTEMPTS = 2;
+
+const igClassify = entry => {
+  const title = String((entry && entry.title) || "").toLowerCase();
+  if (title.includes("video")) return "video";
+  if (title.includes("thumb")) return "image";
+  if (title.includes("image")) return "image";
+  return "image";
+};
+
+const igFetch = async igUrl => {
+  let lastErr;
+  for (let attempt = 1; attempt <= IG_ATTEMPTS; attempt++) {
+    try {
+      const res = await axios.get(IG_API, {
+        params: { url: igUrl, apiKey: IG_KEY },
+        timeout: 60000,
+        validateStatus: () => true,
+        transformResponse: d => d
+      });
+      const body = typeof res.data === "string" ? (() => { try { return JSON.parse(res.data); } catch (e) { return null; } })() : res.data;
+      if (!body || body.success !== true || !Array.isArray(body.data) || !body.data.length) {
+        const why = body && body.message ? body.message : !body ? "non-JSON response" : "no entries returned";
+        throw new Error("attempt " + attempt + "/" + IG_ATTEMPTS + ": " + why);
+      }
+      // Keep only usable entries; an empty or non-http url must not take the others down with it.
+      const usable = body.data.filter(d => d && typeof d.url === "string" && /^https?:\/\//i.test(d.url));
+      if (!usable.length) throw new Error("attempt " + attempt + "/" + IG_ATTEMPTS + ": no usable media urls");
+      return usable;
+    } catch (err) {
+      lastErr = err;
+      if (attempt === IG_ATTEMPTS) break;
+      await new Promise(r => setTimeout(r, 2500));
+    }
+  }
+  throw new Error("instagram api failed after " + IG_ATTEMPTS + " attempts (" + (lastErr && lastErr.message) + ")");
+};
+
+smd({
+  pattern: "insta",
+  alias: ["instagram", "ig"],
+  desc: "Download instagram reels and images.",
+  category: "downloader",
+  use: "<instagram url>",
+  filename: __filename
+}, async (ctx, text) => {
+  try {
+    const parts = ("" + (text ? text : ctx.reply_text)).split(" ")[0].trim();
+    if (!parts || !/^https?:\/\/(www\.)?instagram\.com\//i.test(parts)) {
+      return ctx.reply("*_Send an instagram post, reel or tv link_*\n\n" + prefix + "insta https://www.instagram.com/reel/xxxxxxx/");
+    }
+    const entries = await igFetch(parts);
+    let sent = 0;
+    for (const entry of entries) {
+      const kind = igClassify(entry);
+      try {
+        await ctx.bot.sendMessage(ctx.chat, {
+          [kind]: { url: entry.url },
+          caption: sent === 0 ? "*HERE WE GO*\n" + parts : "",
+          contextInfo: { ...(await ctx.bot.contextInfo(Config.botname, ctx.senderName)) }
+        }, { quoted: ctx });
+        sent++;
+      } catch (err) {
+        // One bad entry (expired token, unsupported size) must not stop the remaining ones.
+        console.error("insta: skipping " + (entry.title || "entry") + " ->", err && err.message);
+      }
+    }
+    if (!sent) throw new Error("every returned media url failed to send");
+    if (entries.length > 1) await ctx.reply("*_Sent " + sent + " of " + entries.length + " items_*");
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand : insta", err, "*_Could not download that instagram link._*");
+  }
+});
+// Terabox downloader. Replaces .video, which was dead: ytdl-secktor cannot extract YouTube's
+// player ("Could not extract functions"), its ruhend-scraper fallback needs `undici` (not
+// installed), and youtubei.js@9.4.0 has no getInfo().
+//
+// The upstream accepts terabox.com and 1024terabox.com with an /s/ share path; teraboxapp.com and
+// the /wap/share/link form are both rejected with "Invalid TeraBox URL".
+const TB_API = "https://api.qasimdev.dpdns.org/api/terabox/download";
+const TB_KEY = "qasim-dev";
+const TB_ATTEMPTS = 3;
+
+// Terabox shares hold anything - mp4, images, but also zip/rar/pdf - so everything found is sent and
+// classified by extension, defaulting to document. Field names in the payload are undocumented, so
+// walk the whole response instead of guessing a path.
+const TB_VIDEO = /\.(mp4|m3u8|mov|m4v|webm|mkv|avi|flv)(\.|$)/i;
+const TB_IMAGE = /\.(jpg|jpeg|png|webp|gif|bmp)(\.|$)/i;
+
+const tbClassify = url => {
+  const clean = String(url).split("?")[0];
+  if (TB_VIDEO.test(clean)) return { kind: "video", mimetype: "video/mp4" };
+  if (TB_IMAGE.test(clean)) return { kind: "image", mimetype: "image/jpeg" };
+  return { kind: "document", mimetype: "application/octet-stream" };
+};
+
+const tbCollect = (node, out = []) => {
+  if (Array.isArray(node)) {
+    node.forEach(n => tbCollect(n, out));
+  } else if (node && typeof node === "object") {
+    Object.entries(node).forEach(([k, v]) => {
+      if (/thumbnail|preview|avatar|icon|poster/i.test(k)) return;
+      tbCollect(v, out);
+    });
+  } else if (typeof node === "string" && /^https?:\/\//i.test(node) && /\.[a-z0-9]{2,5}(\?|$)/i.test(node)) {
+    if (!out.some(m => m.url === node)) out.push(Object.assign({ url: node }, tbClassify(node)));
+  }
+  return out;
+};
+
+const fetchTeraBox = async shareUrl => {
+  let lastErr;
+  for (let attempt = 1; attempt <= TB_ATTEMPTS; attempt++) {
+    try {
+      const res = await axios.get(TB_API, {
+        params: { apiKey: TB_KEY, url: shareUrl },
+        timeout: 90000,
+        validateStatus: () => true,
+        transformResponse: d => d
+      });
+      const text = String(res.data === undefined || res.data === null ? "" : res.data);
+      // Cold cache returns a Varnish "503 first byte timeout" HTML page; the object still gets
+      // cached on the way through, so retrying is what actually recovers it.
+      if (!text.trim().startsWith("{")) throw new Error("attempt " + attempt + "/" + TB_ATTEMPTS + ": upstream not ready");
+      const body = JSON.parse(text);
+      if (body.success !== true) throw new Error(body.error || body.message || "request failed");
+      const files = tbCollect(body);
+      if (!files.length) throw new Error("no downloadable files in the response");
+      return { files, data: body.data || {} };
+    } catch (err) {
+      lastErr = err;
+      if (attempt === TB_ATTEMPTS) break;
+      await new Promise(r => setTimeout(r, 5000));
+    }
+  }
+  throw new Error("terabox api failed after " + TB_ATTEMPTS + " attempts (" + (lastErr && lastErr.message) + ")");
+};
+
+smd({
+  pattern: "terabox",
+  alias: ["tb", "tera"],
+  desc: "Download files from a terabox share link.",
+  category: "downloader",
+  filename: __filename,
+  use: "<terabox share url>"
+}, async (ctx, text) => {
+  try {
+    const parts = ("" + (text ? text : ctx.reply_text)).split(" ")[0].trim();
+    if (!/^https?:\/\/(?:(?:www|m)\.|\d+)?terabox\.com\/s\//i.test(parts)) {
+      return ctx.reply("*_Send a terabox share link_*\n\n" + prefix + "terabox https://www.terabox.com/s/xxxxx");
+    }
+    const { files, data } = await fetchTeraBox(parts);
+    const title = data.title || data.filename || "";
+    let sent = 0;
+    for (const file of files) {
+      try {
+        const name = String(file.url).split("?")[0].split("/").pop() || "terabox-file";
+        await ctx.bot.sendMessage(ctx.chat, {
+          [file.kind]: { url: file.url },
+          caption: sent === 0 && title ? "*" + title + "*" : "",
+          fileName: name,
+          mimetype: file.mimetype,
+          contextInfo: { ...(await ctx.bot.contextInfo(Config.botname, ctx.senderName)) }
+        }, { quoted: ctx });
+        sent++;
+      } catch (err) {
+        // One dead link must not stop the rest of the share.
+        console.error("terabox: skipping file ->", err && err.message);
+      }
+    }
+    if (!sent) throw new Error("every file url failed to send");
+    if (files.length > 1) await ctx.reply("*_Sent " + sent + " of " + files.length + " files_*");
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand: terabox", err, "*_Couldn't get those terabox files_*");
+  }
+});
+// Twitter/X downloader. Replaces .video2, which was dead: youtubei.js@9.4.0 has no getInfo() and
+// its ruhend-scraper fallback needs `undici`, which is not installed.
+//
+// The endpoint accepts x.com ONLY - every twitter.com variant returns "Invalid X (Twitter) URL" -
+// so the URL is rewritten before it is sent, otherwise a perfectly good tweet link is rejected.
+const TW_API = "https://api.qasimdev.dpdns.org/api/twitter/download";
+const TW_KEY = "qasim-dev";
+const TW_ATTEMPTS = 2;
+
+// Media lives at an undeclared place in the payload (the no-media case is the only documented
+// shape: { success, data:{ date, likes, replies, retweets, authorName, authorUsername, text } }).
+// Rather than hardcode a guess, walk the whole response and collect every http(s) URL that ends in
+// a media extension, whatever it is nested under. Videos are matched first so a mixed payload keeps
+// the video ahead of its thumbnail.
+const collectMedia = (node, out = []) => {
+  if (Array.isArray(node)) {
+    node.forEach(n => collectMedia(n, out));
+  } else if (node && typeof node === "object") {
+    // Skip avatar/icon fields, otherwise a media-less tweet posts the author's profile picture
+    // as if it were the attachment.
+    Object.entries(node).forEach(([k, v]) => {
+      if (/profile|avatar|icon|banner/i.test(k)) return;
+      collectMedia(v, out);
+    });
+  } else if (typeof node === "string" && /^https?:\/\//i.test(node)) {
+    const clean = node.split("?")[0].toLowerCase();
+    if (/profile_images|profile_image|avatar/i.test(clean)) return out;
+    const isVideo = /\.(mp4|m3u8|mov|m4v|webm)(\.|$)/.test(clean);
+    const isImage = /\.(jpg|jpeg|png|webp|gif)(\.|$)/.test(clean);
+    if (isVideo || isImage) {
+      if (!out.some(m => m.url === node)) out.push({ url: node, kind: isVideo ? "video" : "image" });
+    }
+  }
+  return out;
+};
+
+const fetchTweet = async tweetUrl => {
+  let lastErr;
+  for (let attempt = 1; attempt <= TW_ATTEMPTS; attempt++) {
+    try {
+      const res = await axios.get(TW_API, {
+        params: { apiKey: TW_KEY, url: tweetUrl },
+        timeout: 60000,
+        validateStatus: () => true,
+        transformResponse: d => d
+      });
+      const text = String(res.data === undefined || res.data === null ? "" : res.data);
+      if (!text.trim().startsWith("{")) throw new Error("attempt " + attempt + "/" + TW_ATTEMPTS + ": non-JSON response");
+      const body = JSON.parse(text);
+      if (body.success !== true) throw new Error(body.error || body.message || "request failed");
+      const media = collectMedia(body).sort((a, b) => (a.kind === "video" ? -1 : 1) - (b.kind === "video" ? -1 : 1));
+      if (!media.length) throw new Error("no media urls in the response");
+      return { media, data: body.data || {} };
+    } catch (err) {
+      lastErr = err;
+      if (attempt === TW_ATTEMPTS) break;
+      await new Promise(r => setTimeout(r, 3000));
+    }
+  }
+  throw new Error("twitter api failed after " + TW_ATTEMPTS + " attempts (" + (lastErr && lastErr.message) + ")");
+};
+
+smd({
+  pattern: "xdown",
+  alias: ["twitter", "twdown"],
+  desc: "Download video or images from a tweet.",
+  category: "downloader",
+  filename: __filename,
+  use: "<x.com/.../status/... link>"
+}, async (ctx, text) => {
+  try {
+    const parts = ("" + (text ? text : ctx.reply_text)).split(" ")[0].trim();
+    // Accept either host on input, but only ever send x.com upstream.
+    const normalised = parts.replace(/^https?:\/\/(www\.|mobile\.)?twitter\.com/i, "https://x.com");
+    if (!/^https?:\/\/(www\.)?x\.com\/[^/]+\/status\/\d+/i.test(normalised)) {
+      return ctx.reply("*_Send a tweet link_*\n\n" + prefix + "twitter https://x.com/user/status/1234567890");
+    }
+    const { media, data } = await fetchTweet(normalised);
+    const caption = (data.authorName ? "*" + data.authorName + "*\n" : "") + (data.text || "");
+    let sent = 0;
+    for (const item of media) {
+      try {
+        await ctx.bot.sendMessage(ctx.chat, {
+          [item.kind]: { url: item.url },
+          caption: sent === 0 ? caption : "",
+          fileName: (data.authorUsername || "Suhail MD") + (item.kind === "video" ? ".mp4" : ".jpg"),
+          mimetype: item.kind === "video" ? "video/mp4" : "image/jpeg",
+          contextInfo: { ...(await ctx.bot.contextInfo(Config.botname, ctx.senderName)) }
+        }, { quoted: ctx });
+        sent++;
+      } catch (err) {
+        // One dead media url must not stop the rest of the tweet.
+        console.error("twitter: skipping " + item.kind + " ->", err && err.message);
+      }
+    }
+    if (!sent) throw new Error("every media url failed to send");
+    if (media.length > 1) await ctx.reply("*_Sent " + sent + " of " + media.length + " items_*");
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand: twitter", err, "*_Couldn't get that tweet media_*");
+  }
+});
+smd({
+  pattern: "play",
+  alias: ["music"],
+  desc: "Sends info about the query(of youtube video/audio).",
+  category: "downloader",
+  filename: __filename,
+  use: "<faded-Alan walker.>"
+}, async (ctx, text) => {
+  try {
+    const ytText = text ? text : ctx.reply_text;
+    if (!ytText) {
+      return ctx.reply("*" + prefix + "play back in black*");
+    }
+    // .play accepts a title as well as a link, so resolve through ytsearch first when needed.
+    const url = await resolveYtUrl(ytText);
+    if (!url) {
+      return await ctx.reply("*_Couldn't find that song_*");
+    }
+    await ctx.reply("_Downloading " + ytText + "?_\n_May take up to a minute._");
+    const media = await loaderFetch(url, "mp3");
+    await ctx.bot.sendMessage(ctx.jid, {
+      audio: {
+        url: media.url
+      },
+      mimetype: "audio/mpeg",
+      fileName: media.title || "Suhail MD -- YT Audio",
+      caption: media.title || Config.caption
+    }, {
+      quoted: ctx
+    });
+  } catch (err) {
+    return ctx.error(err + "\n\ncommand: play", err, "*_Couldn't get that song_*");
+  }
+});
+smd({
+  pattern: "sound",
+  desc: "Downloads ringtone.",
+  category: "downloader",
+  filename: __filename,
+  use: "<Dowanload Tiktok Sounds>"
+}, async (ctx, text) => {
+  try {
+    if (!text) {
+      return ctx.reply("*Give A Number Example: " + prefix + "sound 5*");
+    }
+    const size = parseInt(text);
+    if (size.toString() == "NaN" || size < 1 || size > 160) {
+      return ctx.reply("*_❌ Give a number between 1 to 160_*");
+    }
+    let songUrl = "https://github.com/DGXeon/Tiktokmusic-API/raw/master/tiktokmusic/sound" + size.toString() + ".mp3";
+    let buffer = await getBuffer(songUrl);
+    var apkReply2 = {
+      ...(await ctx.bot.contextInfo(Config.botname, "ᴛɪᴋᴛᴏᴋ ꜱᴏᴜɴᴅ " + size))
+    };
+    let apkReply = {
+      audio: buffer,
+      fileName: "Suhail-Md tiktok Sound" + size + ".m4a",
+      mimetype: "audio/mpeg",
+      ptt: true,
+      contextInfo: apkReply2
+    };
+    return ctx.bot.sendMessage(ctx.chat, apkReply, {
+      quoted: ctx
+    });
+  } catch (err) {
+    return ctx.error(err + "\n\ncommand: sound", err, false);
+  }
+});
+smd({
+  pattern: "tiktok",
+  alias: ["tt", "ttdl"],
+  desc: "Downloads Tiktok Videos Via Url.",
+  category: "downloader",
+  filename: __filename,
+  use: "<add tiktok url.>"
+}, async (ctx, text) => {
+  try {
+    const raw = text ? text : ctx.reply_text;
+    if (!raw) {
+      return await ctx.reply("*Uhh Please, Provide me tiktok Video Url*\n*_Ex " + prefix + "tiktok https://www.tiktok.com/@user/video/1234567890_");
+    }
+    const url = extractTiktokUrl(raw);
+    if (!url) {
+      return await ctx.reply("*Uhh Please, Give me Valid Tiktok Video Url!*");
+    }
+    await ctx.reply("_Fetching TikTok..._");
+    const media = await tiktokFetch(url);
+    const caption = (media.author ? "*" + media.author + "*\n" : "") + (media.title ? media.title : Config.caption);
+    await ctx.bot.sendMessage(ctx.jid, {
+      video: {
+        url: media.video
+      },
+      mimetype: "video/mp4",
+      fileName: "TikTok - " + (media.author || "video"),
+      caption: caption
+    }, {
+      quoted: ctx
+    });
+    if (media.audio) {
+      await ctx.bot.sendMessage(ctx.jid, {
+        audio: {
+          url: media.audio
+        },
+        mimetype: "audio/mpeg",
+        fileName: "TikTok audio - " + (media.author || ""),
+        caption: Config.caption
+      }, {
+        quoted: ctx
+      });
+    }
+  } catch (err) {
+    return ctx.error(err + "\n\ncommand: tiktok", err, "*_Couldn't download that TikTok_*");
+  }
+});
+smd({
+  pattern: "ringtone",
+  desc: "Downloads ringtone.",
+  category: "downloader",
+  filename: __filename,
+  use: "<ringtone name>"
+}, async (ctx, text) => {
+  try {
+    if (!text) {
+      return ctx.reply("Example: " + prefix + "ringtone back in black");
+    }
+    const {
+      ringtone: toBuffer
+    } = require(lib_dir + "/scraper");
+    let buffer = await toBuffer(text);
+    var tgsReply = {
+      ...(await ctx.bot.contextInfo(Config.botname, "ʀɪɴɢᴛᴏɴᴇ ᴅᴏᴡɴʟᴏᴀᴅᴇʀ"))
+    };
+    let tgsOptions = {
+      audio: {
+        url: buffer[0].audio
+      },
+      caption: "*" + buffer[0].title + "*",
+      fileName: buffer[0].title + ".mp3",
+      mimetype: "audio/mpeg",
+      contextInfo: tgsReply
+    };
+    return ctx.bot.sendMessage(ctx.jid, tgsOptions, {
+      quoted: ctx
+    });
+  } catch (err) {
+    return ctx.error(err + "\n\ncommand: ringtone", err, "*_Ringtone not found with given name!!_*");
+  }
+});
+smd({
+  pattern: "pint",
+  alias: ["pinterest"],
+  desc: "Downloads image from pinterest.",
+  category: "downloader",
+  filename: __filename,
+  use: "<text|image name>"
+}, async (ctx, text) => {
+  const query = text ? text : ctx.reply_text;
+  if (!query) {
+    return ctx.reply("What picture are you looking for?");
+  }
+  try {
+    const pins = await pinterestSearch(query);
+    if (!pins.length) {
+      return await ctx.send("*_No Result found!_*");
+    }
+    const limit = Math.min(pins.length, 5);
+    for (let i = 0; i < limit; i++) {
+      const pin = pins[i];
+      await ctx.bot.sendMessage(ctx.chat, {
+        image: {
+          url: pin.images_url
+        },
+        caption: pin.grid_title ? "*" + pin.grid_title + "*" : Config.caption
+      });
+    }
+  } catch (err) {
+    return ctx.error(err + "\n\ncommand: pint", err, "*_Couldn't search Pinterest_*");
+  }
+});
+smd({
+  pattern: "mediafire",
+  alias: ["mf", "mfire"],
+  desc: "Downloads media from Mediafire.",
+  category: "downloader",
+  filename: __filename,
+  use: "<url of mediafire>"
+}, async (ctx, text) => {
+  try {
+    let mediafireUrl = text.includes("mediafire.com") ? text : ctx.reply_text || "";
+    if (!mediafireUrl.includes("mediafire.com")) {
+      return ctx.reply("*_Provide mediafire url, Use: " + prefix + "mf https://www.mediafire.com/file/i33wo2xvgvid05m/muezzaverse_2221749531_musicaldown.com.mp4/file!_*");
+    }
+    let mediafireId2 = mediafireUrl.split(" ")[0];
+    const response = await mediafire(mediafireId2);
+    if (!response || !response[0]) {
+      return ctx.reply("could not found anything");
+    }
+    let mediafireHeader = "『 *Mᴇᴅɪᴀғɪʀᴇ Dᴏᴡɴʟᴏᴀᴅᴇʀ* 』\n\n *Name* : " + response[0].nama + "\n *Size* :" + response[0].size + "\n *Mime* : " + response[0].mime + "\n \n\n" + Config.caption;
+    mediafireHeader = await fancytext(mediafireHeader, 25);
+    var mediafireReply2 = {
+      ...(await ctx.bot.contextInfo(Config.botname, "MEDIAFIRE"))
+    };
+    let mediafireReply = {
+      document: {
+        url: response[0].link
+      },
+      caption: mediafireHeader,
+      fileName: response[0].nama,
+      mimetype: response[0].mime,
+      contextInfo: mediafireReply2
+    };
+    return await ctx.bot.sendMessage(ctx.chat, mediafireReply);
+  } catch (err) {
+    return ctx.error(err + "\n\ncommand: mediafire", err, "*_File not found!!_*");
+  }
+});
+smd({
+  pattern: "song",
+  alias: ["audio"],
+  desc: "Downloads audio from youtube.",
+  category: "downloader",
+  filename: __filename,
+  use: "<give text>"
+}, async (ctx, text) => {
+  try {
+    if (!text) {
+      return await ctx.reply("*_Give Me Search Query_*");
+    }
+    // Same loader API as .play - it needs a URL, so resolve the title through ytsearch first.
+    const url = await resolveYtUrl(text);
+    if (!url) {
+      return await ctx.reply("*_Couldn't find that song_*");
+    }
+    await ctx.reply("_Downloading " + text + "?_\n_May take up to a minute._");
+    const media = await loaderFetch(url, "mp3");
+    await ctx.bot.sendMessage(ctx.jid, {
+      audio: {
+        url: media.url
+      },
+      mimetype: "audio/mpeg",
+      fileName: media.title || "Suhail MD -- YT Audio",
+      caption: media.title || Config.caption
+    }, {
+      quoted: ctx
+    });
+  } catch (err) {
+    return ctx.error(err + "\n\ncommand: song", err, "*_File not found!!_*");
+  }
+});
+cmd({
+  pattern: "yts",
+  alias: ["yt", "ytsearch"],
+  desc: "Search Song From youtube",
+  category: "downloader",
+  filename: __filename,
+  use: "<Yt Search Query>"
+}, async (ctx, text) => {
+  try {
+    if (!text) {
+      return await ctx.reply("*_Give Me Search Query!_*");
+    }
+    let songSearch2 = await ytFind(text);
+    let songHeader = "*sᴜʜᴀɪʟ-ᴍᴅ • ʏᴏᴜᴛᴜʙᴇ ᴅᴏᴡɴʟᴏᴀᴅ* \n*_______________________________* \n\n_Reply Any Number To Download._\n  _For Audio: 1 mp3._\n  _For Video: 1 video._\n  _For document: 1 document._\n\n_Results For : " + text + "_ \n\n";
+    let index = 1;
+    for (let item of songSearch2.all) {
+      songHeader += " \n*" + index++ + " : " + item.title + (item.timestamp ? "(" + item.timestamp + ")" : "") + "*\n*Url : " + item.url + "*";
+    }
+    return await ctx.sendMessage(ctx.chat, {
+      image: {
+        url: songSearch2.all[0].thumbnail
+      },
+      caption: songHeader
+    }, {
+      quoted: ctx
+    });
+  } catch (err) {}
+});
+// ---------------------------------------------------------------------------
+// Loader API - replaces the youtubei.js / ytdl path for .play, .ytmp3 and .ytmp4.
+//
+// The old flow died with "Video not Found": youtubei.js and ytdl no longer resolve streams.
+// Media source: gtech-api. It takes a YouTube URL and hands back direct, progressive media URLs
+// (verified: video_url_hd -> 206 video/mp4 ftypmp42, audio_url -> 206 audio/webm), for both regular
+// videos and Shorts. The previous loaderto endpoint was removed because its downloadUrl 302s into an
+// ad tracker (p.savenow.to -> ey43.com) and never serves media, so no retry could ever succeed.
+//
+// The auth check only tests that apikey is present - it accepts any value.
+const GTECH_API = "https://gtech-api-xtp1.onrender.com";
+const GTECH_KEY = "APIKEY";
+// Measured over 3 tries x 3 videos: a "good" video succeeds every time, a "bad" one fails every
+// time on BOTH providers (scrappy returns ERR_YTDLP_EXIT on the same IDs - YouTube blocks those
+// from Render egress), and one in between landed 1 of 3. So per-attempt success is roughly 1/3 and
+// a single retry is not enough. Four attempts puts the odds near 75% for no extra dependency.
+const GTECH_ATTEMPTS = 4;
+
+let loaderUrlProblem = "";
+
+// gtech answers with a JSON envelope that carries status:false and a message when it cannot resolve a
+// video, so never trust a single response: parse defensively, require status:true, and verify the
+// media URL actually serves bytes before handing it to the chat.
+const parseLoaderBody = raw => {
+  if (raw && typeof raw === "object") {
+    return raw;
+  }
+  if (typeof raw !== "string") {
+    return null;
+  }
+  const text = raw.trim();
+  if (!text.startsWith("{")) {
+    return null;
+  }
+  try {
+    return JSON.parse(text);
+  } catch (err) {
+    return null;
+  }
+};
+
+// The endpoint reports success (progress 1000) and hands back a downloadUrl that is sometimes an
+// ad/redirect page rather than the file - which is what produced "unplayable" media. Confirm the
+// URL really serves audio/video before handing it on, and report what came back so the cause is
+// visible instead of shipping a broken file.
+const loaderUrlIsPlayable = async url => {
+  try {
+    const res = await axios.get(url, {
+      method: "GET",
+      responseType: "arraybuffer",
+      timeout: 60000,
+      maxRedirects: 5,
+      headers: {
+        Range: "bytes=0-2047"
+      }
+    });
+    const type = String(res.headers["content-type"] || "").split(";")[0];
+    const bytes = res.data ? res.data.length : 0;
+    if (bytes > 0 && /^(audio|video|application\/octet-stream)/i.test(type)) {
+      return true;
+    }
+    loaderUrlProblem = "served " + (type || "unknown content-type") + ", not media";
+    return false;
+  } catch (err) {
+    loaderUrlProblem = "request failed (" + (err && err.response ? "HTTP " + err.response.status : err && err.code) + ")";
+    return false;
+  }
+};
+
+const loaderFetch = async (ytUrl, format) => {
+  // format "720" is the only video caller; everything else wants audio.
+  const wantVideo = String(format) === "720";
+  const route = wantVideo ? "/api/video/yt" : "/api/audio/yt";
+  let lastErr;
+  for (let attempt = 1; attempt <= GTECH_ATTEMPTS; attempt++) {
+    try {
+      const res = await axios.get(GTECH_API + route, {
+        params: { apikey: GTECH_KEY, url: ytUrl },
+        timeout: 60000,
+        validateStatus: () => true,
+        transformResponse: d => d
+      });
+      const body = parseLoaderBody(res.data);
+      if (!body) throw new Error("attempt " + attempt + "/" + GTECH_ATTEMPTS + ": non-JSON response");
+      if (body.status !== true) {
+        throw new Error("attempt " + attempt + "/" + GTECH_ATTEMPTS + ": " + (body.message || body.error || "status=false"));
+      }
+      const media = (body.result && body.result.media) || {};
+      // Prefer the HD variant but fall back down; gtech reports "No SD video URL available".
+      const downloadUrl = wantVideo
+        ? (media.video_url_hd && media.video_url_hd.startsWith("http") ? media.video_url_hd : media.video_url)
+        : media.audio_url;
+      if (!downloadUrl || !String(downloadUrl).startsWith("http")) {
+        throw new Error("attempt " + attempt + "/" + GTECH_ATTEMPTS + ": no " + (wantVideo ? "video" : "audio") + " url in payload");
+      }
+      // Keep the existing guard: gtech sometimes hands back a URL whose proxy 403s, and shipping
+      // that would post a broken file to the chat instead of an honest error.
+      if (!(await loaderUrlIsPlayable(downloadUrl))) {
+        throw new Error("attempt " + attempt + "/" + GTECH_ATTEMPTS + ": media url " + (loaderUrlProblem || "not playable"));
+      }
+      return {
+        url: downloadUrl,
+        title: media.title,
+        thumbnail: media.thumbnail,
+        format: wantVideo ? (media.extension || "mp4") : (media.extension || "webm"),
+        quality: media.quality
+      };
+    } catch (err) {
+      lastErr = err;
+      if (attempt === GTECH_ATTEMPTS) {
+        break;
+      }
+      await new Promise(r => setTimeout(r, 2500));
+    }
+  }
+  throw new Error("gtech returned no playable file after " + GTECH_ATTEMPTS + " attempts (" + (lastErr && lastErr.message) + ")");
+};
+
+// TikTok download API. The old command scraped three third-party endpoints
+// (api_smd/ttdl2, musically, betabotz tiktokdl) which no longer resolve anything.
+// This endpoint returns direct CDN links; we prefer nowatermark_hd, then nowatermark, then
+// watermarked. Note the media URLs 302 to a tiktokcdn host, so redirects must be followed.
+const TIKTOK_API = "https://api.qasimdev.dpdns.org/api/tiktok/download";
+const TIKTOK_KEY = "qasim-dev";
+
+const tiktokFetch = async url => {
+  const res = await axios.get(TIKTOK_API, {
+    params: {
+      url: url,
+      apiKey: TIKTOK_KEY
+    },
+    timeout: 90000
+  });
+  const body = res.data || {};
+  if (!body.success || !body.data) {
+    throw new Error(body.message || "tiktok api returned no data");
+  }
+  const data = body.data;
+  // data.data is the list of renditions; pick the best no-watermark one available.
+  const variants = Array.isArray(data.data) ? data.data : [];
+  const pick = type => (variants.find(v => v && v.type === type) || {}).url;
+  const video = pick("nowatermark_hd") || pick("nowatermark") || pick("watermark");
+  if (!video) {
+    throw new Error("tiktok api returned no playable video url");
+  }
+  return {
+    video: video,
+    audio: data.music_info && data.music_info.url,
+    title: data.title,
+    author: data.author && (data.author.nickname || data.author.fullname),
+    duration: data.duration,
+    cover: data.cover
+  };
+};
+
+// TikTok share text carries trailing prose ("This post is shared via TikTok Lite..."), and short
+// vm.tiktok.com links need expanding, so pull the URL out rather than trusting the raw input.
+const extractTiktokUrl = text => {
+  const found = String(text || "").match(/https?:\/\/(?:www\.|vm\.)?tiktok\.com\/[^\s]+/i);
+  return found ? found[0] : "";
+};
+
+// Pinterest search API. The old path scraped id.pinterest.com directly, which no longer returns
+// anything usable; this endpoint returns ready-to-send image URLs.
+const PINTEREST_API = "https://api.qasimdev.dpdns.org/api/pinterest/search";
+const PINTEREST_KEY = "qasim-dev";
+
+const pinterestSearch = async query => {
+  const res = await axios.get(PINTEREST_API, {
+    params: {
+      query: query,
+      apiKey: PINTEREST_KEY
+    },
+    timeout: 90000
+  });
+  const body = res.data || {};
+  if (!body.success || !Array.isArray(body.data)) {
+    throw new Error(body.message || "pinterest search returned no results");
+  }
+  return body.data.filter(pin => pin && pin.images_url);
+};
+
+// Resolve a query or URL to a full YouTube URL.
+// Search provider. qasimdev's /api/youtube/video is preferred over secktor-pack because it answers
+// from Varnish in ~6s once warm, against secktor-pack's consistent ~9s scrape on every call.
+//
+// Cold cache is the normal first response: Varnish exceeds its first-byte timeout while the backend
+// extracts and returns a "503 first byte timeout" HTML page. The object still gets cached on the way
+// through (x-cache-ttl 300), so the next attempt hits it. That is why a retry - not a cache bypass -
+// is the correct response to that 503.
+//
+// Deliberately returns the same { videos: [{ url, ... }] } shape secktor-pack returns, so the four
+// existing call sites keep working untouched. Named ytFind because two call sites already bind a local
+// variable called ytSearch, which would shadow the function.
+const QASIM_SEARCH = "https://api.qasimdev.dpdns.org/api/youtube/video";
+const QASIM_SEARCH_KEY = "qasim-dev";
+const QASIM_SEARCH_ATTEMPTS = 3;
+
+const searchViaQasim = async term => {
+  for (let attempt = 1; attempt <= QASIM_SEARCH_ATTEMPTS; attempt++) {
+    try {
+      const res = await axios.get(QASIM_SEARCH, {
+        params: { apiKey: QASIM_SEARCH_KEY, query: term, format: "360" },
+        timeout: 60000,
+        validateStatus: () => true,
+        transformResponse: d => d
+      });
+      const text = String(res.data === undefined || res.data === null ? "" : res.data);
+      if (!text.trim().startsWith("{")) throw new Error("non-JSON response");
+      const body = JSON.parse(text);
+      const info = body && body.success === true && body.data && body.data.searchInfo;
+      if (!info || !info.url) throw new Error("no searchInfo.url in payload");
+      return {
+        videos: [{
+          url: info.url,
+          title: body.data.title || "",
+          thumbnail: body.data.thumbnail || "",
+          duration: { seconds: 0, timestamp: info.timestamp || "" }
+        }]
+      };
+    } catch (err) {
+      if (attempt === QASIM_SEARCH_ATTEMPTS) {
+        console.error("ytFind: qasimdev search failed, falling back to secktor-pack ->", err && err.message);
+        return null;
+      }
+      await new Promise(r => setTimeout(r, 4000));
+    }
+  }
+  return null;
+};
+
+const ytFind = async term => (await searchViaQasim(term)) || (await yts(term));
+
+const resolveYtUrl = async text => {
+  const found = ytIdRegex.exec(text);
+  if (found && found[0]) {
+    return found[0];
+  }
+  const results = await ytFind(text);
+  const video = results && results.videos && results.videos[0];
+  return video && video.url;
+};
+
+smd({
+  pattern: "ytmp4",
+  alias: ["ytv", "ytvid", "ytvideo"],
+  desc: "Downloads video from youtube.",
+  category: "downloader",
+  filename: __filename,
+  use: "<yt video url>"
+}, async (ctx, text) => {
+  const docText = text ? text : ctx.reply_text;
+  if (!docText) {
+    return await ctx.reply("*_provide youtube video url!_*");
+  }
+  let url;
+  try {
+    url = await resolveYtUrl(docText);
+  } catch (err) {
+    return await ctx.reply("*_Couldn't find that video_*\n_" + (err && err.message ? err.message.split("\n")[0] : "search failed") + "_");
+  }
+  if (!url) {
+    return await ctx.reply("*_Couldn't find that video_*");
+  }
+  try {
+    await ctx.reply("_Fetching " + (docText || url) + "..._\n_May take up to a minute._");
+    const media = await loaderFetch(url, "720");
+    await ctx.bot.sendMessage(ctx.jid, {
+      video: {
+        url: media.url
+      },
+      mimetype: "video/mp4",
+      fileName: media.title || "Suhail MD -- YT Video",
+      caption: "  *Here's Your Video*\n" + Config.caption
+    }, {
+      quoted: ctx
+    });
+  } catch (err) {
+    return await ctx.error(err + "\n\ncommand: ytmp4", err, "*_Couldn't get that video_*");
+  }
+});
+smd({
+  pattern: "ytmp3",
+  alias: ["yta"],
+  desc: "Downloads audio by yt link.",
+  category: "downloader",
+  use: "<yt video url>"
+}, async (ctx, text) => {
+  const ytText4 = text ? text : ctx.reply_text;
+  if (!ytText4) {
+    return await ctx.reply("*Uhh please, Provide youtube video url!*");
+  }
+  const match = ytIdRegex.exec(ytText4);
+  if (!match || !match[0]) {
+    return await ctx.reply("*Uhh please, Provide youtube video url!*");
+  }
+  try {
+    await ctx.reply("_Fetching audio..._\n_May take up to a minute._");
+    const media = await loaderFetch(match[0], "mp3");
+    await ctx.bot.sendMessage(ctx.jid, {
+      audio: {
+        url: media.url
+      },
+      mimetype: "audio/mpeg",
+      fileName: media.title || "Suhail MD -- YT Audio",
+      caption: media.title || Config.caption
+    }, {
+      quoted: ctx
+    });
+  } catch (err) {
+    return await ctx.error(err + "\n\ncommand: ytmp3", err, "*_Couldn't get that audio_*");
+  }
+});
+smd({
+  pattern: "ytdoc",
+  alias: ["ytd"],
+  desc: "Downloads audio by yt link as document.",
+  category: "downloader",
+  use: "<ytdoc video url>"
+}, async (ctx, text) => {
+  try {
+    let ytDocText = text ? text : ctx.reply_text;
+    const match = ytIdRegex.exec(ytDocText) || [];
+    if (!ytDocText || !match[0]) {
+      return await ctx.reply("❌Please provide me a url");
+    }
+    var url = match[1];
+    var ok = false;
+    try {
+      if (global.ytdl_disabled) {
+        throw "ytdl_ready is disabled!";
+      }
+      let info = await ytdl.getInfo(match[0]);
+      url = info.videoDetails.title;
+      let filePath = "./temp/Suhail-Md " + match[1] + ".mp3";
+      const stream = ytdl(match[0], {
+        filter: format => format.audioBitrate == 160 || format.audioBitrate == 128
+      }).pipe(fs.createWriteStream(filePath));
+      ok = filePath;
+      await new Promise((resolve, reject) => {
+        stream.on("error", reject);
+        stream.on("finish", resolve);
+      });
+    } catch (err) {
+      console.log("here now,ytdl-core : ", err);
+      try {
+        ok = await yt.download(match[1], {
+          type: "audio",
+          quality: "best"
+        });
+      } catch (err3) {
+        return await ctx.error(err3 + "\n\ncommand: ytdoc", err3, "*_file not Found!!_*");
+      }
+    }
+    if (!ok) {
+      return await ctx.send("*_Uhh dear, video not found_*");
+    }
+    var ytReply2 = {
+      ...(await ctx.bot.contextInfo(Config.botname, "ʏᴛᴅᴏᴄ ᴍᴘ3 ʏᴏᴜᴛᴜʙᴇ"))
+    };
+    const ytOptions = {
+      url: ok
+    };
+    let ytReply = {
+      document: ytOptions,
+      mimetype: "audio/mpeg",
+      fileName: "Suhail-Md--" + match[1] + ".mp3",
+      caption: Config.caption,
+      contextInfo: ytReply2
+    };
+    await ctx.bot.sendMessage(ctx.jid, ytReply, {
+      quoted: ctx
+    });
+    try {
+      return await fs.unlinkSync(ok);
+    } catch {}
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand: ytdoc", err, "*_audio file not Found!!_*");
+  }
+});
+smd({
+  on: "text"
+}, async (ctx, text, {
+  isCreator: isCreator
+}) => {
+  if (ctx.quoted && ctx.text) {
+    const lines = ctx.quoted.text.split("\n");
+    if (lines[0].includes("sᴜʜᴀɪʟ-ᴍᴅ • sᴏɴɢ ᴅᴏᴡɴʟᴏᴀᴅᴇʀ")) {
+      const urlLine = lines.find(item => item.startsWith("Url :"));
+      let playUrl = urlLine.replace("Url :", "").trim();
+      try {
+        await ctx.sendMessage(ctx.chat, {
+          react: {
+            text: "✨",
+            key: ctx.key
+          }
+        });
+        let buffer;
+        if (ctx.text.startsWith("1") || ctx.text.startsWith("2")) {
+          const ytReply3 = {
+            ...ctx.key
+          };
+          let ytOptions2 = {
+            key: ytReply3,
+            message: {
+              extendedTextMessage: {
+                text: ("" + prefix + (ctx.text.startsWith("1") ? "ytmp4" : "play") + " " + playUrl + " " + (text.toLowerCase().includes("doc") ? "document" : "")).trim()
+              }
+            },
+            pushName: ctx.pushName,
+            messageTimestamp: ctx.messageTimestamp
+          };
+          ctx.bot.ev.emit("messages.upsert", {
+            messages: [ytOptions2],
+            type: "notify"
+          });
+        }
+      } catch (err) {
+        ctx.error(err + "\n\nCommand song Listener", err, "*Video Not Found!*");
+      }
+    } else if (lines[0].includes("sᴜʜᴀɪʟ-ᴍᴅ • ʏᴏᴜᴛᴜʙᴇ ᴅᴏᴡɴʟᴏᴀᴅ")) {
+      let appPrefix = "*" + ctx.text.split(" ")[0] + " : ";
+      const appLine = lines.find(item => item.startsWith(appPrefix));
+      if (appLine) {
+        try {
+          let appName = appLine.replace(appPrefix, "").split("*")[0].trim();
+          const nameLine = lines[lines.indexOf(appLine) + 1];
+          const appUrl = nameLine.split("*")[1].replace("Url : ", "").trim();
+          if (appUrl.startsWith("http")) {
+            await ctx.sendMessage(ctx.chat, {
+              react: {
+                text: "✨",
+                key: ctx.key
+              }
+            });
+            const appOptions = {
+              ...ctx.key
+            };
+            let audioType = text.toLowerCase().includes("doc") ? "document" : /mp3|audio|music/g.test(text) ? "audio" : "video";
+            let appReply = {
+              key: appOptions,
+              message: {
+                extendedTextMessage: {
+                  text: ("" + prefix + (audioType == "audio" ? "play" : "video") + " " + appUrl + " " + (audioType === "document" ? audioType : "")).trim()
+                }
+              },
+              pushName: ctx.pushName,
+              messageTimestamp: ctx.messageTimestamp
+            };
+            ctx.bot.ev.emit("messages.upsert", {
+              messages: [appReply],
+              type: "notify"
+            });
+          }
+        } catch (err) {
+          ctx.error(err + "\n\nCommand yts Listener", err, "*Video Not Found!*");
+        }
+      }
+    } else if (lines[0].includes("sᴜʜᴀɪʟ-ᴍᴅ • ᴀᴘᴋ ᴅᴏᴡɴʟᴏᴀᴅ ʟɪsᴛ")) {
+      let playPrefix = "*" + ctx.text.split(" ")[0] + " : ";
+      const appLine = lines.find(item => item.startsWith(playPrefix));
+      if (appLine) {
+        try {
+          let playName = appLine.replace(playPrefix, "").split("*")[0].trim();
+          const idLine = lines[lines.indexOf(appLine) + 1];
+          const playId = idLine.split("*")[1].replace("Id : ", "").trim();
+          await ctx.sendMessage(ctx.chat, {
+            react: {
+              text: "✨",
+              key: ctx.key
+            }
+          });
+          let app = await download(playId);
+          let appLine2 = "*App Name :* " + app.name;
+          appLine2 += "\n*App id        :* " + app.package;
+          appLine2 += "\n*Last Up       :* " + app.lastup;
+          appLine2 += "\n*App Size     :* " + app.size;
+          appLine2 += "\n               \n" + global.caption;
+          let appReply = {
+            document: {
+              url: app.dllink
+            },
+            mimetype: "application/vnd.android.package-archive",
+            fileName: app.name + ".apk",
+            caption: appLine2
+          };
+          return await ctx.sendMessage(ctx.chat, appReply, {
+            quoted: ctx
+          });
+        } catch (err) {
+          ctx.reply("*_Can't Download, App Limit Exceed_*");
+        }
+      }
+    }
+  }
+});

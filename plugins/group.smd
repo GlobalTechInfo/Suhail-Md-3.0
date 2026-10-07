@@ -1,0 +1,1257 @@
+/**
+//══════════════════════════════════════════════════════════════════════════════════════════════════════//
+//                                                                                                      //
+//                                ＷＨＡＴＳＡＰＰ ＢＯＴ－ＭＤ ＢＥＴＡ                                   //
+//                                                                                                      // 
+//                                         Ｖ：1．2．8                                                   // 
+//                                                                                                      // 
+//            ███████╗██╗   ██╗██╗  ██╗ █████╗ ██╗██╗         ███╗   ███╗██████╗                        //
+//            ██╔════╝██║   ██║██║  ██║██╔══██╗██║██║         ████╗ ████║██╔══██╗                       //
+//            ███████╗██║   ██║███████║███████║██║██║         ██╔████╔██║██║  ██║                       //
+//            ╚════██║██║   ██║██╔══██║██╔══██║██║██║         ██║╚██╔╝██║██║  ██║                       //
+//            ███████║╚██████╔╝██║  ██║██║  ██║██║███████╗    ██║ ╚═╝ ██║██████╔╝                       //
+//            ╚══════╝ ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝╚══════╝    ╚═╝     ╚═╝╚═════╝                        //
+//                                                                                                      //
+//                                                                                                      //
+//                                                                                                      //
+//══════════════════════════════════════════════════════════════════════════════════════════════════════//
+*
+   * @project_name : Suhail-Md
+   * @author : Suhail Tech Info
+   * @youtube : https://www.youtube.com/@SuhailTechInfo
+   * @description : Suhail-Md ,A Multi-functional whatsapp user bot.
+   * @version 1.2.8
+*
+* 
+   * Created By Suhail Tech Info.
+   * © 2024 Suhail-Md.
+*/
+
+let Suhail_Md = "Suhail MD Whatsapp bot md";
+const {
+  updateProfilePicture,
+  parsedJid
+} = require("../lib");
+const {
+  sck,
+  smd,
+  sck1,
+  jsonformat,
+  botpic,
+  TelegraPh,
+  RandomXP,
+  send,
+  Config,
+  tlang,
+  warndb,
+  sleep,
+  getAdmin,
+  getBuffer,
+  prefix,
+  lidMap
+} = require("../lib");
+const {
+  Sticker,
+  createSticker,
+  StickerTypes
+} = require("wa-sticker-formatter");
+const moment = require("moment-timezone");
+// discord-xp was imported here but never used; removed (it also pinned a vulnerable mongoose 5.x).
+const fs = require("fs-extra");
+const Jimp = require("jimp");
+const sᴜʜᴀɪʟ_ᴍᴅ = require("../lib/plugins");
+const {
+  cmd
+} = sᴜʜᴀɪʟ_ᴍᴅ;
+const grouppattern = /https:\/\/chat\.whatsapp\.com\/[A-Za-z0-9]{22}/g;
+smd({
+  cmdname: "join",
+  info: "joins group by link",
+  type: "whatsapp",
+  fromMe: true,
+  filename: __filename,
+  use: "<group link.>"
+}, async (ctx, text) => {
+  try {
+    if (ctx.reply_message && ctx.reply_message.groupInvite) {
+      var invite = await ctx.bot.groupAcceptInviteV4(ctx.chat, ctx.reply_message.msg);
+      if (invite && invite.includes("joined to:")) {
+        return await send(ctx, "*_Joined_*", {}, "", ctx);
+      }
+    }
+    let input = text ? text : ctx.reply_text;
+    const match = input.match(grouppattern);
+    if (!match) {
+      return await ctx.reply("*_Uhh Please, provide group link_*");
+    }
+    let inviteCode = match[0].split("https://chat.whatsapp.com/")[1].trim();
+    await ctx.bot.groupAcceptInvite(inviteCode).then(result => send(ctx, "*_Joined_*", {}, "", ctx)).catch(err => ctx.send("*_Can't Join, Group Id not found!!_*"));
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand: join", err, "*_Can't Join, Group Id not found, Sorry!!_*");
+  }
+});
+smd({
+  cmdname: "newgc",
+  info: "Create New Group",
+  type: "whatsapp",
+  filename: __filename,
+  use: "<group link.>"
+}, async (ctx, text, {
+  smd: smdHelper,
+  cmdName: cmdName
+}) => {
+  try {
+    if (!ctx.isCreator) {
+      return ctx.reply(tlang().owner);
+    }
+    if (!text) {
+      return await ctx.reply("*_provide Name to Create new Group!!!_*\n*_Ex: " + (prefix + smdHelper) + " My Name Group @user1,2,3.._*");
+    }
+    let target = text;
+    if (target.toLowerCase() === "info") {
+      return await ctx.send(("\n  *Its a command to create new Gc*\n  \t```Ex: " + (prefix + cmd) + " My new Group```\n  \n*You also add peoples in newGc*\n  \t```just reply or mention Users```\n  ").trim());
+    }
+    let members = [ctx.sender];
+    if (ctx.quoted) {
+      members.push(ctx.quoted.sender);
+    }
+    if (ctx.mentionedJid && ctx.mentionedJid[0]) {
+      members.push(...ctx.mentionedJid);
+      try {
+        mentionJids.forEach(item => {
+          var newSubject = item.split("@")[0].trim();
+          target = target.replace(new RegExp("@" + newSubject, "g"), "");
+        });
+      } catch {}
+    }
+    const subject = target.substring(0, 60);
+    const newGroup = await Suhail.bot.groupCreate(subject, [...members]);
+    if (newGroup) {
+      let createdGroup = await ctx.bot.sendMessage(newGroup.id, {
+        text: "*_Hey Buddy, Welcome to new Group_*\n" + Config.caption
+      });
+      try {
+        var inviteCode = await Suhail.bot.groupInviteCode(newGroup.id);
+      } catch {
+        var inviteCode = false;
+      }
+      var inviteUrl = "https://chat.whatsapp.com/";
+      var fullInviteUrl = "" + inviteUrl + inviteCode;
+      return await send(ctx, ("*_Hurray, New group created!!!_*\n" + (inviteCode ? "*_" + fullInviteUrl + "_*" : "")).trim(), {}, "", createdGroup);
+    } else {
+      await ctx.send("*_Can't create new group, Sorry!!_*");
+    }
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand: " + cmdName, err, "*_Can't create new group, Sorry!!_*");
+  }
+});
+smd({
+  pattern: "ginfo",
+  desc: "get group info by link",
+  type: "group",
+  filename: __filename,
+  use: "<group link.>"
+}, async (ctx, text) => {
+  try {
+    let input = text ? text : ctx.reply_text;
+    const match = input.match(grouppattern) || false;
+    if (!match) {
+      return await ctx.reply("*_Uhh Please, provide group link_*");
+    }
+    let inviteCode = match[0].split("https://chat.whatsapp.com/")[1].trim();
+    // Invite links often carry trailing query text (.../<code>?text=...). Keep only the code.
+    inviteCode = inviteCode.split("?")[0].trim();
+    let inviteInfo;
+    try {
+      inviteInfo = await ctx.bot.groupGetInviteInfo(inviteCode);
+    } catch (err) {
+      // Report what actually failed instead of the blanket "Group Id not found".
+      return await ctx.reply("*_Couldn't read that invite link.*\n_" + (err && err.message ? err.message.split("\n")[0] : "WhatsApp rejected the invite code") + "_");
+    }
+    if (inviteInfo) {
+      const created = new Date(inviteInfo.creation * 1000);
+      var year = created.getFullYear();
+      var month = created.getMonth() + 1;
+      var day = created.getDate();
+      var date = year + "-" + month.toString().padStart(2, "0") + "-" + day.toString().padStart(2, "0");
+      return await send(ctx, (inviteInfo.subject + "\n  \n  Creator: wa.me/" + inviteInfo.owner.split("@")[0] + " \n  GJid; ```" + inviteInfo.id + "  ```\n  *Muted:* " + (inviteInfo.announce ? " yes" : " no") + "\n  *Locked:* " + (inviteInfo.restrict ? " yes" : " no") + "\n  *createdAt:* " + date + "\n  *participents:* " + (inviteInfo.size > 3 ? inviteInfo.size + "th" : inviteInfo.size) + "\n  " + (inviteInfo.desc ? "*description:* " + inviteInfo.desc + "\n" : "") + "\n  " + Config.caption + "\n  ").trim(), {
+        mentions: [inviteInfo.owner]
+      }, "", ctx);
+    } else {
+      await ctx.send("*_Group Id not found, Sorry!!_*");
+    }
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand: ginfo", err, "*_Group Id not found, Sorry!!_*");
+  }
+});
+smd({
+  cmdname: "rejectall",
+  alias: ["rejectjoin"],
+  info: "reject all request to join!",
+  type: "group",
+  filename: __filename
+}, async (ctx, text) => {
+  try {
+    if (!ctx.isGroup) {
+      return ctx.reply(tlang().group);
+    }
+    if (!ctx.isBotAdmin || !ctx.isAdmin) {
+      return await ctx.reply(!ctx.isBotAdmin ? "*_I'm Not Admin In This Group" + (!ctx.isCreator ? ", Idiot" : "") + "_*" : tlang().admin);
+    }
+    const participants = await ctx.bot.groupRequestParticipantsList(ctx.chat);
+    if (!participants || !participants[0]) {
+      return await ctx.reply("*_No Request Join Yet_*");
+    }
+    let rejected = [];
+    let rejectedOutput = "*List of rejected users*\n\n";
+    for (let i = 0; i < participants.length; i++) {
+      try {
+        await ctx.bot.groupRequestParticipantsUpdate(ctx.from, [participants[i].jid], "reject");
+        rejectedOutput += "@" + participants[i].jid.split("@")[0] + "\n";
+        rejected = [...rejected, participants[i].jid];
+      } catch {}
+    }
+    await ctx.send(rejectedOutput, {
+      mentions: [rejected]
+    });
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand: rejectall", err);
+  }
+});
+smd({
+  cmdname: "acceptall",
+  alias: ["acceptjoin"],
+  info: "accept all request to join!",
+  type: "group",
+  filename: __filename
+}, async (ctx, text) => {
+  try {
+    if (!ctx.isGroup) {
+      return ctx.reply(tlang().group);
+    }
+    if (!ctx.isBotAdmin || !ctx.isAdmin) {
+      return await ctx.reply(!ctx.isBotAdmin ? "*_I'm Not Admin In This Group" + (!ctx.isCreator ? ", Idiot" : "") + "_*" : tlang().admin);
+    }
+    const participants = await ctx.bot.groupRequestParticipantsList(ctx.chat);
+    if (!participants || !participants[0]) {
+      return await ctx.reply("*_No Join Request Yet_*");
+    }
+    let admins = [];
+    let output = "*List of accepted users*\n\n";
+    for (let i = 0; i < participants.length; i++) {
+      try {
+        await ctx.bot.groupRequestParticipantsUpdate(ctx.from, [participants[i].jid], "approve");
+        output += "@" + participants[i].jid.split("@")[0] + "\n";
+        admins = [...admins, participants[i].jid];
+      } catch {}
+    }
+    await ctx.send(output, {
+      mentions: [admins]
+    });
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand: acceptall", err);
+  }
+});
+smd({
+  cmdname: "listrequest",
+  alias: ["requestjoin"],
+  info: "Set Description of Group",
+  type: "group",
+  filename: __filename,
+  use: "<enter Description Text>"
+}, async (ctx, text) => {
+  try {
+    if (!ctx.isGroup) {
+      return ctx.reply(tlang().group);
+    }
+    if (!ctx.isBotAdmin || !ctx.isAdmin) {
+      return await ctx.reply(!ctx.isBotAdmin ? "*_I'm Not Admin In This Group" + (!ctx.isCreator ? ", Idiot" : "") + "_*" : tlang().admin);
+    }
+    const participants = await ctx.bot.groupRequestParticipantsList(ctx.chat);
+    if (!participants || !participants[0]) {
+      return await ctx.reply("*_No Request Join Yet_*");
+    }
+    let requested = [];
+    let output = "*List of User Request to join*\n\n";
+    for (let i = 0; i < participants.length; i++) {
+      output += "@" + participants[i].jid.split("@")[0] + "\n";
+      requested = [...requested, participants[i].jid];
+    }
+    return await ctx.send(output, {
+      mentions: [requested]
+    });
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand: listrequest", err);
+  }
+});
+smd({
+  cmdname: "setdesc",
+  alias: ["setgdesc", "gdesc"],
+  info: "Set Description of Group",
+  type: "group",
+  filename: __filename,
+  use: "<enter Description Text>"
+}, async (ctx, text) => {
+  try {
+    if (!ctx.isGroup) {
+      return ctx.reply(tlang().group);
+    }
+    if (!text) {
+      return await ctx.reply("*Provide Description text, You wants to Set*");
+    }
+    if (!ctx.isBotAdmin || !ctx.isAdmin) {
+      return await ctx.reply(!ctx.isBotAdmin ? "*_I'm Not Admin In This Group" + (!ctx.isCreator ? ", Idiot" : "") + "_*" : tlang().admin);
+    }
+    try {
+      await ctx.bot.groupUpdateDescription(ctx.chat, text + "\n\n\t" + Config.caption);
+      ctx.reply("*_✅Group description Updated Successfuly!_*");
+    } catch (err) {
+      await ctx.reply("*_Can't update description, Group Id not found!!_*");
+    }
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand: setdesc", err);
+  }
+});
+smd({
+  cmdname: "setname",
+  alias: ["setgname", "gname"],
+  info: "Set Description of Group",
+  type: "group",
+  filename: __filename,
+  use: "<enter Description Text>"
+}, async (ctx, text) => {
+  try {
+    if (!ctx.isGroup) {
+      return ctx.reply(tlang().group);
+    }
+    if (!text) {
+      return await ctx.reply("*Uhh Dear, Give text to Update This Group Name*");
+    }
+    if (!ctx.isBotAdmin || !ctx.isAdmin) {
+      return await ctx.reply(!ctx.isBotAdmin ? "*_I'm Not Admin In This Group" + (!ctx.isCreator ? ", Idiot" : "") + "_*" : tlang().admin);
+    }
+    try {
+      await ctx.bot.groupUpdateSubject(ctx.chat, text);
+      ctx.reply("*_✅Group Name Updated Successfuly.!_*");
+    } catch (err) {
+      await ctx.reply("*_Can't update name, Group Id not found!!_*");
+    }
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand: setdesc", err);
+  }
+});
+smd({
+  cmdname: "left",
+  info: "left from a group.",
+  fromMe: true,
+  type: "group",
+  filename: __filename
+}, async (ctx, text) => {
+  try {
+    if (!ctx.isGroup) {
+      return await ctx.send(tlang().group, {}, "", ctx);
+    }
+    let toggle = text.toLowerCase().trim();
+    if (toggle.startsWith("sure") || toggle.startsWith("ok") || toggle.startsWith("yes")) {
+      await ctx.bot.groupParticipantsUpdate(ctx.chat, [ctx.user], "remove");
+      ctx.send("*Group Left!!*", {}, "", ctx, ctx.user);
+    } else {
+      return await ctx.send("*_Use: " + prefix + "left sure/yes/ok, For security threats_*", {}, "", ctx);
+    }
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand: left", err, false);
+  }
+});
+let mtypes = ["imageMessage"];
+smd({
+  pattern: "gpp",
+  desc: "Set Group profile picture",
+  category: "group",
+  use: "<reply to image>",
+  filename: __filename
+}, async ctx => {
+  try {
+    if (!ctx.isGroup) {
+      return await ctx.send(tlang().group, {}, "", ctx);
+    }
+    if (!ctx.isBotAdmin || !ctx.isAdmin) {
+      return await ctx.reply(!ctx.isBotAdmin ? "*_I'm Not Admin In This Group" + (!ctx.isCreator ? ", Idiot" : "") + "_*" : tlang().admin);
+    }
+    let quoted = mtypes.includes(ctx.mtype) ? ctx : ctx.reply_message;
+    if (!quoted || !mtypes.includes(quoted?.mtype || "need_Media")) {
+      return await ctx.reply("*Reply to an image, dear*");
+    }
+    return await updateProfilePicture(ctx, ctx.chat, quoted, "gpp");
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand : gpp", err);
+  }
+});
+smd({
+  pattern: "fullgpp",
+  desc: "Set full screen group profile picture",
+  category: "group",
+  use: "<reply to image>",
+  filename: __filename
+}, async ctx => {
+  try {
+    if (!ctx.isGroup) {
+      return await ctx.send(tlang().group, {}, "", ctx);
+    }
+    if (!ctx.isBotAdmin || !ctx.isAdmin) {
+      return await ctx.reply(!ctx.isBotAdmin ? "*_I'm Not Admin In This Group" + (!ctx.isCreator ? ", Idiot" : "") + "_*" : tlang().admin);
+    }
+    let quoted = mtypes.includes(ctx.mtype) ? ctx : ctx.reply_message;
+    if (!quoted || !mtypes.includes(quoted?.mtype || "need_Media")) {
+      return await ctx.reply("*Reply to an image, dear*");
+    }
+    return await updateProfilePicture(ctx, ctx.chat, quoted, "fullgpp");
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand : fullgpp", err);
+  }
+  {}
+});
+cmd({
+  pattern: "common",
+  desc: "Get common participants in two groups, and kick using .common kick, jid",
+  category: "owner",
+  fromMe: true,
+  filename: __filename
+}, async (ctx, text) => {
+  try {
+    let memberJid = await parsedJid(text);
+    var target;
+    var targetJid;
+    if (memberJid.length > 1) {
+      target = memberJid[0].includes("@g.us") ? memberJid[0] : ctx.chat;
+      targetJid = memberJid[1].includes("@g.us") ? memberJid[1] : ctx.chat;
+    } else if (memberJid.length == 1) {
+      target = ctx.chat;
+      targetJid = memberJid[0].includes("@g.us") ? memberJid[0] : ctx.chat;
+    } else {
+      return await ctx.send("*Uhh Dear, Please Provide a Group Jid*");
+    }
+    if (targetJid === target) {
+      return await ctx.send("*Please Provide Valid Group Jid*");
+    }
+    var metadata1 = await ctx.bot.groupMetadata(target);
+    var metadata2 = await ctx.bot.groupMetadata(targetJid);
+    var common1 = metadata1.participants.filter(({
+      id: shared1
+    }) => metadata2.participants.some(({
+      id: hasCommon
+    }) => hasCommon === shared1)) || [];
+    if (common1.length == 0) {
+      return await ctx.send("Theres no Common Users in Both Groups");
+    }
+    let isKick = text.split(" ")[0].trim() === "kick" ? true : false;
+    let sameGroups = false;
+    var commonTitle = "   *List Of Common Participants*";
+    if (isKick) {
+      let participants = {
+        chat: target
+      };
+      commonTitle = "  *Kicking Common Participants*";
+      const admins = (await getAdmin(ctx.bot, participants)) || [];
+      var isBotUser = admins.includes(ctx.user) || false;
+      var isSenderAdmin = admins.includes(ctx.sender) || false;
+      if (!isBotUser || !isSenderAdmin) {
+        isKick = false;
+        commonTitle = "  *乂 Can't Kick Common Participants*";
+      }
+      if (!isBotUser) {
+        sameGroups = "*❲❒❳ Reason:* _I Can't Kick Common Participants Without Getting Admin Role,So Provide Admin Role First,_\n";
+      }
+      if (!isSenderAdmin) {
+        sameGroups = "*❲❒❳ Reason:* _Uhh Dear, Only Group Admin Can Kick Common Users Through This Cmd_\n";
+      }
+    }
+    var commonText = " " + commonTitle + "   \n" + (sameGroups ? sameGroups : "") + "\n*❲❒❳ Group1:* " + metadata1.subject + "\n*❲❒❳ Group2:* " + metadata2.subject + "\n*❲❒❳ Common Counts:* _" + common1.length + "_Members_\n\n\n";
+    var list = [];
+    common1.map(async item => {
+      commonText += "  *⬡* @" + item.id.split("@")[0] + "\n";
+      // participant.id is a @lid in LID-era groups; never invent a phone jid from it.
+      list.push(item.jid || lidMap.resolve(item.id) || item.id);
+    });
+    await ctx.send(commonText + ("\n\n\n©" + Config.caption), {
+      mentions: list
+    });
+    if (isKick && !sameGroups) {
+      try {
+        for (const key of list) {
+          // Number comparison: a built phone jid never equals a real LID.
+          if (lidMap.matchesNumber(key, ctx.user) || lidMap.matchesNumber(key, "923004591719") || lidMap.matchesNumber(key, "923184474176")) {
+            continue;
+          }
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          await ctx.bot.groupParticipantsUpdate(target, [key], "remove");
+        }
+      } catch (err) {
+        console.error("Error removing participants:", err);
+      }
+    }
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand: common", err, "*Can't fetch data due to error, Sorry!!*");
+  }
+});
+cmd({
+  pattern: "diff",
+  desc: "Get difference of participants in two groups",
+  category: "owner",
+  filename: __filename
+}, async (ctx, text) => {
+  try {
+    let target = await parsedJid(text);
+    var jid;
+    var groupJid;
+    if (target.length > 1) {
+      jid = target[0].includes("@g.us") ? target[0] : ctx.chat;
+      groupJid = target[1].includes("@g.us") ? target[1] : ctx.chat;
+    } else if (target.length == 1) {
+      jid = ctx.chat;
+      groupJid = target[0].includes("@g.us") ? target[0] : ctx.chat;
+    } else {
+      return await ctx.send("Uhh Dear, Please Provide a Group Jid");
+    }
+    if (groupJid === jid) {
+      return await ctx.send("Please Provide Valid Group Jid");
+    }
+    var metadataB = await ctx.bot.groupMetadata(jid);
+    var metadataA = await ctx.bot.groupMetadata(groupJid);
+    var onlyA = metadataB.participants.filter(({
+      id: onlyA2
+    }) => !metadataA.participants.some(({
+      id: inBoth
+    }) => inBoth === onlyA2)) || [];
+    if (onlyA.length == 0) {
+      return await ctx.send("Theres no Different Users in Both Groups");
+    }
+    var differentText = "  *乂 List Of Different Participants* \n\n*❲❒❳ Group1:* " + metadataB.subject + "\n*❲❒❳ Group2:* " + metadataA.subject + "\n*❲❒❳ Differ Counts:* _" + onlyA.length + "_Members_\n\n\n";
+    var onlyAlist = [];
+    onlyA.map(async item => {
+      differentText += "  *⬡* @" + item.id.split("@")[0] + "\n";
+      onlyAlist.push(item.jid || lidMap.resolve(item.id) || item.id);
+    });
+    return await ctx.send(differentText + ("\n\n\n©" + Config.caption), {
+      mentions: onlyAlist
+    });
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand: unblock", err, "*Can't fetch data due to error, Sorry!!*");
+  }
+});
+cmd({
+  pattern: "invite",
+  desc: "get group link.",
+  category: "group",
+  filename: __filename
+}, async ctx => {
+  try {
+    if (!ctx.isGroup) {
+      return ctx.reply(tlang().group);
+    }
+    if (!ctx.isBotAdmin) {
+      return ctx.reply("*_I'm Not Admin, So I can't Send Invite Link_*");
+    }
+    var inviteCode = await ctx.bot.groupInviteCode(ctx.chat);
+    var inviteUrl = "https://chat.whatsapp.com/";
+    var fullInviteUrl2 = "" + inviteUrl + inviteCode;
+    return ctx.reply("*Group Invite Link Is Here* \n*" + fullInviteUrl2 + "*");
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand: invite", err, "*_Can't fetch data due to error, Sorry!!_*");
+  }
+});
+cmd({
+  pattern: "revoke",
+  desc: "get group link.",
+  category: "group",
+  filename: __filename
+}, async ctx => {
+  try {
+    if (!ctx.isGroup) {
+      return ctx.reply(tlang().group);
+    }
+    if (!ctx.isBotAdmin) {
+      return ctx.reply("*_I'm Not Admin, So I Can't ReSet Group Invite Link_*");
+    }
+    await ctx.bot.groupRevokeInvite(ctx.chat);
+    return ctx.reply("*_Group Link Revoked SuccesFully_*");
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand: revoke", err, "*Can't revoke data due to error, Sorry!!*");
+  }
+});
+cmd({
+  pattern: "tagall",
+  desc: "Tags every person of group.",
+  category: "group",
+  filename: __filename
+}, async (ctx, text) => {
+  try {
+    if (!ctx.isGroup) {
+      return ctx.reply(tlang().group);
+    }
+    const participants = ctx.metadata.participants || {};
+    if (!ctx.isAdmin && !ctx.isCreator) {
+      return ctx.reply(tlang().admin);
+    }
+    let output = "\n══✪〘   *Tag All*   〙✪══\n\n➲ *Message :* " + (text ? text : "blank Message") + " \n " + Config.caption + " \n\n\n➲ *Author:* " + ctx.pushName + " 🔖\n";
+    for (let key of participants) {
+      if (!lidMap.matchesNumber(key.id, "923184474176")) {
+        output += " 📍 @" + key.id.split("@")[0] + "\n";
+      }
+    }
+    await ctx.bot.sendMessage(ctx.chat, {
+      text: output,
+      mentions: participants.map(item => item.id)
+    }, {
+      quoted: ctx
+    });
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand: tagall", err, false);
+  }
+});
+cmd({
+  pattern: "kik",
+  alias: ["fkik"],
+  desc: "Kick all numbers from a certain country",
+  category: "group",
+  filename: __filename
+}, async (ctx, text) => {
+  try {
+    if (!ctx.isGroup) {
+      return ctx.reply(tlang().group);
+    }
+    if (!text) {
+      return await ctx.reply("*Provide Me Country Code. Example: .kik 212*");
+    }
+    if (!ctx.isBotAdmin) {
+      return ctx.reply("*_I'm Not Admin, So I can't kik anyone!_*");
+    }
+    if (!ctx.isAdmin && !ctx.isCreator) {
+      return ctx.reply(tlang().admin);
+    }
+    let filename = text?.split(" ")[0].replace("+", "") || "suhalSer";
+    let notKickedText = "*These Users Not Kicked* \n\t";
+    let participants = ctx.metadata.participants;
+    let count = 0;
+    let isAdmin = false;
+    for (let participant of participants) {
+      // ctx.admins holds objects ({id, jid, admin}), so `.includes(participant.id)` was always
+      // false and admins (including the bot) could be kicked.
+      let isParticipantAdmin =
+        Array.isArray(ctx.admins) && ctx.admins.some(a => a && (a.id === participant.id || a.jid === participant.id || lidMap.matchesNumber(participant.id, a.jid || a.id)));
+      if (participant.id.startsWith(filename) && !isParticipantAdmin && !lidMap.matchesNumber(participant.id, ctx.user) && !lidMap.matchesNumber(participant.id, "923184474176")) {
+        if (!isAdmin) {
+          isAdmin = true;
+          await ctx.reply("*_Kicking ALL the Users With " + filename + " Country Code_*");
+        }
+        try {
+          await ctx.bot.groupParticipantsUpdate(ctx.chat, [participant.id], "remove");
+          count++;
+        } catch {}
+      }
+    }
+    if (count == 0) {
+      return await ctx.reply("*_Ahh, There Is No User Found With " + filename + " Country Code_*");
+    } else {
+      return await ctx.reply("*_Hurray, " + count + " Users With " + filename + " Country Code kicked_*");
+    }
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand: kik", err, "*Can't kik user due to error, Sorry!!*");
+  }
+});
+cmd({
+  pattern: "num",
+  desc: "get all numbers from a certain country",
+  category: "group",
+  filename: __filename
+}, async (ctx, text) => {
+  try {
+    if (!ctx.isGroup) {
+      return ctx.reply(tlang().group);
+    }
+    if (!text) {
+      return await ctx.reply("*Provide Me Country Code. Example: .num 91*");
+    }
+    if (!ctx.isAdmin && !ctx.isCreator) {
+      return ctx.reply(tlang().admin);
+    }
+    let code = text.split(" ")[0];
+    let participants = ctx.metadata?.participants || {};
+    let header = "*List Of Users With " + code + " Country Code*\n";
+    let body = "";
+    for (let key of participants) {
+      if (key.id.startsWith(code)) {
+        body += key.id.split("@")[0] + "\n";
+      }
+    }
+    if (!body) {
+      header = "*There Is No Users With " + code + " Country Code*";
+    } else {
+      header += body + Config.caption;
+    }
+    await ctx.reply(header);
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand: num", err, "*Can't fetch users data due to error, Sorry!!*");
+  }
+});
+smd({
+  pattern: "poll",
+  desc: "Makes poll in group.",
+  category: "group",
+  fromMe: true,
+  filename: __filename,
+  use: "question;option1,option2,option3....."
+}, async (ctx, text) => {
+  try {
+    let [from, to] = text.split(";");
+    if (text.split(";") < 2) {
+      return await ctx.reply(prefix + "poll question;option1,option2,option3.....");
+    }
+    let list = [];
+    for (let jid of to.split(",")) {
+      if (jid && jid != "") {
+        list.push(jid);
+      }
+    }
+    await ctx.bot.sendMessage(ctx.chat, {
+      poll: {
+        name: from,
+        values: list
+      }
+    });
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand: poll", err);
+  }
+});
+cmd({
+  pattern: "promote",
+  desc: "Provides admin role to replied/quoted user",
+  category: "group",
+  filename: __filename,
+  use: "<quote|reply|number>"
+}, async ctx => {
+  try {
+    if (!ctx.isGroup) {
+      return ctx.reply(tlang().group);
+    }
+    if (!ctx.isBotAdmin) {
+      return ctx.reply("*_I'm Not Admin Here, So I Can't Promote Someone_*");
+    }
+    if (!ctx.isAdmin) {
+      return ctx.reply(tlang().admin);
+    }
+    let target = ctx.mentionedJid[0] ? ctx.mentionedJid[0] : ctx.quoted ? ctx.quoted.sender : false;
+    if (!target) {
+      return await ctx.reply("*Uhh dear, reply/mention an User*");
+    }
+    await ctx.bot.groupParticipantsUpdate(ctx.chat, [target], "promote");
+    await ctx.send("*_@" + target.split("@")[0] + " promoted Succesfully!_*", {
+      mentions: [target]
+    });
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand: promote", err);
+  }
+});
+cmd({
+  pattern: "kick",
+  desc: "Kicks replied/quoted user from group.",
+  category: "group",
+  filename: __filename,
+  use: "<quote|reply|number>"
+}, async (ctx, text) => {
+  try {
+    if (!ctx.isGroup) {
+      return ctx.reply(tlang().group);
+    }
+    if (!ctx.isBotAdmin) {
+      return await ctx.reply("*_I'm Not Admin In This Group, Idiot_*");
+    }
+    if (!ctx.isAdmin) {
+      return ctx.reply(tlang().admin);
+    }
+    let target = ctx.quoted ? ctx.quoted.sender : ctx.mentionedJid[0] ? ctx.mentionedJid[0] : false;
+    if (!target) {
+      return await ctx.reply("*Uhh dear, reply/mention an User*");
+    }
+    if (ctx.checkBot(target)) {
+      return await ctx.reply("*Huh, I can't kick my Creator!!*");
+    }
+    await ctx.bot.groupParticipantsUpdate(ctx.chat, [target], "remove");
+    await ctx.send("*Hurray, @" + target.split("@")[0] + " Kicked Succesfully!*", {
+      mentions: [target]
+    });
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand: kick", err);
+  }
+});
+smd({
+  pattern: "group",
+  desc: "mute and unmute group.",
+  category: "group",
+  filename: __filename
+}, async (ctx, text) => {
+  if (!ctx.isGroup) {
+    return ctx.reply(tlang().group);
+  }
+  if (!ctx.isAdmin && !ctx.isCreator) {
+    return ctx.reply(tlang().admin);
+  }
+  let command = text.toLowerCase();
+  try {
+    const profilePic = (await ctx.bot.profilePictureUrl(ctx.chat, "image").catch(err => THUMB_IMAGE)) || THUMB_IMAGE;
+    const metadata = ctx.metadata;
+    const admins = ctx.admins;
+    const adminLines = admins.map((item, index) => "  " + (index + 1) + ". wa.me/" + item.id.split("@")[0]).join("\n");
+    console.log("listAdmin , ", adminLines);
+    const owner = metadata.owner || admins.find(item => item.admin === "superadmin")?.id || false;
+    let info = "\n      *「 INFO GROUP 」*\n*▢ ID :*\n   • " + metadata.id + "\n*▢ NAME :* \n   • " + metadata.subject + "\n*▢ Members :*\n   • " + metadata.participants.length + "\n*▢ Group Owner :*\n   • " + (owner ? "wa.me/" + owner.split("@")[0] : "notFound") + "\n*▢ Admins :*\n" + adminLines + "\n*▢ Description :*\n   • " + (metadata.desc?.toString() || "unknown") + "\n   ";
+    let groupInfo = isMongodb ? await sck.findOne({
+      id: ctx.chat
+    }) : false;
+    if (groupInfo) {
+      info += ("*▢ 🪢 Extra Group Configuration :*\n  • Group Nsfw :    " + (groupInfo.nsfw == "true" ? "✅" : "❎") + " \n  • Antilink :    " + (groupInfo.antilink == "true" ? "✅" : "❎") + "\n  • Economy :    " + (groupInfo.economy == "true" ? "✅" : "❎") + "\n").trim();
+      if (groupInfo.welcome == "true") {
+        info += "\n*▢ Wellcome Message :* \n  • " + groupInfo.welcometext;
+        info += "\n\n*▢ Goodbye Message :* \n  • " + groupInfo.goodbyetext;
+      }
+    }
+    try {
+      await ctx.bot.sendMessage(ctx.chat, {
+        image: {
+          url: profilePic
+        },
+        caption: info
+      }, {
+        quoted: ctx
+      });
+    } catch (err) {
+      await ctx.send(info, {}, "", ctx);
+      return console.log("error in group info,\n", err);
+    }
+  } catch (err) {
+    await ctx.error(err + "\ncmdName: Group info");
+    return console.log("error in group info,\n", err);
+  }
+});
+cmd({
+  pattern: "pick",
+  desc: "Pics random user from Group",
+  category: "group",
+  filename: __filename
+}, async (ctx, text) => {
+  try {
+    if (!ctx.isGroup) {
+      return ctx.reply(tlang().group);
+    }
+    if (!text) {
+      return ctx.reply("*Which type of User you want?*");
+    }
+    let participantIds = ctx.metadata.participants.map(item => item.id);
+    let target = participantIds[Math.floor(Math.random() * participantIds.length)];
+    ctx.bot.sendMessage(ctx.jid, {
+      text: "The most " + text + " around us is *@" + target.split("@")[0] + "*",
+      mentions: [target]
+    }, {
+      quoted: ctx
+    });
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand : pick", err);
+  }
+});
+smd({
+  pattern: "ship",
+  category: "group",
+  filename: __filename
+}, async ctx => {
+  if (!ctx.isGroup) {
+    return ctx.reply(tlang().group);
+  }
+  let participantIds = ctx.metadata.participants.map(item => item.id);
+  var target = ctx.reply_message ? ctx.reply_message.sender : ctx.mentionedJid[0] ? ctx.mentionedJid[0] : false;
+  var jid;
+  if (target) {
+    jid = target;
+  } else {
+    jid = participantIds[Math.floor(Math.random() * participantIds.length)];
+  }
+  if (lidMap.matchesNumber(jid, ctx.sender) || ctx.sender === jid) {
+    return ctx.reply("*Wait... What!!!,You wanna do matchmaking with yourself!*");
+  }
+  async function groupJid() {
+    var tagJid;
+    const number = Math.floor(Math.random() * 100);
+    if (number < 25) {
+      tagJid = "\t\t\t\t\t*RelationShip Percentage : " + number + "%* \n\t\tThere's still time to reconsider your choices";
+    } else if (number < 50) {
+      tagJid = "\t\t\t\t\t*RelationShip Percentage : " + number + "%* \n\t\t Good enough, I guess! 💫";
+    } else if (number < 75) {
+      tagJid = "\t\t\t\t\t*RelationShip Percentage : " + number + "%* \n\t\t\tStay together and you'll find a way ⭐️";
+    } else if (number < 90) {
+      tagJid = "\t\t\t\t\t*RelationShip Percentage : " + number + "%* \n\tAmazing! You two will be a good couple 💖 ";
+    } else {
+      tagJid = "\t\t\t\t\t*RelationShip Percentage : " + number + "%* \n\tYou both are fit to be together 💙";
+    }
+    return tagJid;
+  }
+  var message = {
+    ...(await ctx.bot.contextInfo("Matchmaking", "   ˚ʚ♡ɞ˚"))
+  };
+  await ctx.reply("\t❣️ *Matchmaking...* ❣️\n\t*✯────────────────────✯*\n@" + ctx.sender.split("@")[0] + "  x  @" + jid.split("@")[0] + "\n\t*✯────────────────────✯*\n\n" + (await groupJid()) + "\n\n" + Config.caption, {
+    contextInfo: message,
+    mentions: [jid]
+  }, "suhail");
+});
+smd({
+  pattern: "mute",
+  desc: "Provides admin role to replied/quoted user",
+  category: "group",
+  filename: __filename,
+  use: "<quote|reply|number>"
+}, async ctx => {
+  try {
+    if (!ctx.isGroup) {
+      return ctx.reply(tlang().group);
+    }
+    // Do NOT gate on ctx.metadata.announce here. That metadata is a cached app-state snapshot and
+    // does not refresh until the next sync, so the guard made .unmute refuse right after a mute
+    // ("already unmute") and then .mute refuse after the resync ("already muted") - which is
+    // exactly the flip-flopping that was reported. Just send the setting and report what happened.
+    if (!ctx.isBotAdmin) {
+      return ctx.reply(tlang().botAdmin);
+    }
+    if (!ctx.isCreator && !ctx.isAdmin) {
+      return ctx.reply(tlang().admin);
+    }
+    try {
+      await ctx.bot.groupSettingUpdate(ctx.chat, "announcement");
+      return await ctx.reply("*_Group Chat Muted successfully!!_*");
+    } catch (err) {
+      return await ctx.reply("*_Couldn't mute the group:* " + (err && err.message ? err.message.split("\n")[0] : "unknown error"));
+    }
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand: gmute", err);
+  }
+});
+smd({
+  pattern: "unmute",
+  desc: "Provides admin role to replied/quoted user",
+  category: "group",
+  filename: __filename,
+  use: "<quote|reply|number>"
+}, async ctx => {
+  try {
+    if (!ctx.isGroup) {
+      return ctx.reply(tlang().group);
+    }
+    // Same stale-metadata problem as .mute - see the note there.
+    if (!ctx.isBotAdmin) {
+      return ctx.reply(tlang().botAdmin);
+    }
+    if (!ctx.isCreator && !ctx.isAdmin) {
+      return ctx.reply(tlang().admin);
+    }
+    try {
+      await ctx.bot.groupSettingUpdate(ctx.chat, "not_announcement");
+      return await ctx.reply("*_Group Chat UnMuted successfully!!_*");
+    } catch (err) {
+      return await ctx.reply("*_Couldn't unmute the group:* " + (err && err.message ? err.message.split("\n")[0] : "unknown error"));
+    }
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand: gunmute", err);
+  }
+});
+smd({
+  pattern: "lock",
+  fromMe: true,
+  desc: "only allow admins to modify the group's settings.",
+  type: "group"
+}, async (ctx, text) => {
+  try {
+    if (!ctx.isGroup) {
+      return ctx.reply(tlang().group);
+    }
+    if (ctx.metadata.restrict) {
+      return await ctx.reply("*Hey " + (ctx.isSuhail ? "Buddy" : "Sir") + ", Group setting already locked*");
+    }
+    if (!ctx.isBotAdmin) {
+      return await ctx.reply("*_I'm not admin!_*");
+    }
+    ;
+    if (!ctx.isCreator && !ctx.isAdmin) {
+      return ctx.reply(tlang().admin);
+    }
+    await ctx.bot.groupSettingUpdate(ctx.chat, "locked").then(result => ctx.reply("*_Group locked, Only Admin can change group settinggs!!_*")).catch(err => ctx.reply("*_Can't change Group Setting, Sorry!_*"));
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand: lock", err);
+  }
+});
+smd({
+  pattern: "unlock",
+  fromMe: true,
+  desc: "allow everyone to modify the group's settings.",
+  type: "group"
+}, async (ctx, text) => {
+  try {
+    if (!ctx.isGroup) {
+      return ctx.reply(tlang().group);
+    }
+    if (!ctx.metadata.restrict) {
+      return await ctx.reply("*Hey " + (ctx.isSuhail ? "Buddy" : "Sir") + ", Group setting already unlocked*");
+    }
+    if (!ctx.isBotAdmin) {
+      return await ctx.reply("*_I'm not admin!_*");
+    }
+    ;
+    if (!ctx.isCreator && !ctx.isAdmin) {
+      return ctx.reply(tlang().admin);
+    }
+    await ctx.bot.groupSettingUpdate(ctx.chat, "unlocked").then(result => ctx.reply("*_Group unlocked, everyone change group settings!!_*")).catch(err => ctx.reply("*_Can't change Group Setting, Sorry!_*"));
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand: unlock", err);
+  }
+});
+smd({
+  pattern: "tag",
+  alias: ["hidetag"],
+  desc: "Tags everyperson of group without mentioning their numbers",
+  category: "group",
+  filename: __filename,
+  use: "<text>"
+}, async (ctx, text) => {
+  try {
+    if (!ctx.isGroup) {
+      return ctx.reply(tlang().group);
+    }
+    if (!text && !ctx.reply_message) {
+      return ctx.reply("*Example : " + prefix + "tag Hi Everyone, How are you Doing*");
+    }
+    if (!ctx.isAdmin && !ctx.isCreator) {
+      return ctx.reply(tlang().admin);
+    }
+    let quoted = ctx.reply_message ? ctx.reply_message : ctx;
+    let quotedText = ctx.reply_message ? ctx.reply_message.text : text;
+    let caption = "";
+    let mtype;
+    let quotedType = quoted.mtype;
+    if (quotedType == "imageMessage") {
+      caption = "image";
+      mtype = await quoted.download();
+    } else if (quotedType == "videoMessage") {
+      caption = "video";
+      mtype = await quoted.download();
+    } else if (!text && ctx.quoted) {
+      mtype = ctx.quoted.text;
+    } else {
+      mtype = text;
+    }
+    if (!mtype) {
+      return await ctx.send("*_Uhh dear, reply to message!!!_*");
+    }
+    return await ctx.send(mtype, {
+      caption: quotedText,
+      mentions: ctx.metadata.participants.map(item => item.id)
+    }, caption, quoted);
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand: tag", err);
+  }
+});
+cmd({
+  pattern: "tagadmin",
+  desc: "Tags only Admin numbers",
+  category: "group",
+  filename: __filename,
+  use: "<text>"
+}, async (ctx, text) => {
+  try {
+    if (!ctx.isGroup) {
+      return ctx.reply(tlang().group);
+    }
+    if (!ctx.isAdmin && !ctx.isCreator) {
+      return ctx.reply(tlang().admin);
+    }
+    const adminLines = ctx.admins.map((item, index) => " *|  @" + item.id.split("@")[0] + "*").join("\n");
+    let info = ("\n▢ Tag by : @" + ctx.sender.split("@")[0] + "\n" + (text ? "≡ Message :" + text : "") + "\n\n*┌─⊷ GROUP ADMINS*\n" + adminLines + "\n*└───────────⊷*\n\n" + Config.caption).trim();
+    return await ctx.bot.sendMessage(ctx.chat, {
+      text: info,
+      mentions: [ctx.sender, ...ctx.admins.map(item => item.id)]
+    });
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand: tagadmin", err);
+  }
+});
+cmd({
+  pattern: "add",
+  desc: "Add that person in group",
+  category: "group",
+  filename: __filename,
+  use: "<number|reply|mention>"
+}, async (ctx, text) => {
+  try {
+    if (!ctx.isGroup) {
+      return ctx.reply(tlang().group);
+    }
+    if (!ctx.isBotAdmin) {
+      return await ctx.reply("*_I'm Not Admin In This Group, " + (ctx.isSuhail ? "Buddy" : "Sir") + "_*");
+    }
+    if (!ctx.isAdmin) {
+      return ctx.reply(tlang().admin);
+    }
+    let target = ctx.quoted ? ctx.quoted.sender : ctx.mentionedJid[0] ? ctx.mentionedJid[0] : text ? text.replace(/[^0-9]/g, "").replace(/[\s+]/g, "") + "@s.whatsapp.net" : false;
+    if (!target) {
+      return await ctx.reply("*_Uhh Dear, Please Provide An User._*");
+    }
+    try {
+      await ctx.bot.groupParticipantsUpdate(ctx.chat, [target], "add");
+      await ctx.reply("*_User Added in Group!!_*");
+      ctx.react("✨");
+    } catch (err) {
+      await ctx.react("❌");
+      await ctx.bot.sendMessage(target, {
+        text: "*_Here's The Group Invite Link!!_*\n\n @" + ctx.sender.split("@")[0] + " Wants to add you in below group\n\n*_https://chat.whatsapp.com/" + (await ctx.bot.groupInviteCode(ctx.chat)) + "_*\n ---------------------------------  \n*_Join If YOu Feel Free?_*",
+        mentions: [ctx.sender]
+      }, {
+        quoted: ctx
+      });
+      await ctx.reply("*_Can't add user, Invite sent in pm_*");
+    }
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand: add", err);
+  }
+});
+cmd({
+  pattern: "getjids",
+  alias: ["gjid", "gjids", "allgc", "gclist"],
+  desc: "Sends chat id of every groups.",
+  category: "group",
+  filename: __filename
+}, async (ctx, text, {
+  cmdName: cmdName
+}) => {
+  try {
+    if (!ctx.isCreator) {
+      return ctx.reply(tlang().owner);
+    }
+    n = await ctx.bot.groupFetchAllParticipating();
+    const participants = Object.entries(n).slice(0).map(item => item[1]);
+    let body = "";
+    let found = false;
+    let found2 = false;
+    if (text.includes("jid")) {
+      found = true;
+    } else if (text.includes("name")) {
+      found2 = true;
+    }
+    await ctx.reply("Fetching " + (found ? "Only jids" : found2 ? "Only Names" : "Names and Jids") + " from " + participants.length + " Groups");
+    await sleep(2000);
+    for (var key of participants.map(item => item.id)) {
+      body += found ? "" : "\n*Group:* " + n[key].subject + " ";
+      body += found2 ? "" : "\n*JID:* " + key + "\n";
+    }
+    return await ctx.send(body);
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand: " + cmdName, err);
+  }
+});
+cmd({
+  pattern: "demote",
+  desc: "Demotes replied/quoted user from group",
+  category: "group",
+  filename: __filename,
+  use: "<quote|reply|number>"
+}, async ctx => {
+  try {
+    if (!ctx.isGroup) {
+      return ctx.reply(tlang().group);
+    }
+    if (!ctx.isBotAdmin) {
+      return await ctx.reply("*_I'm Not Admin In This Group, Idiot_*");
+    }
+    if (!ctx.isAdmin) {
+      return ctx.reply(tlang().admin);
+    }
+    let target = ctx.mentionedJid[0] ? ctx.mentionedJid[0] : ctx.reply_message ? ctx.reply_message.sender : false;
+    if (!target) {
+      return await ctx.reply("*Uhh dear, reply/mention an User*");
+    }
+    if (ctx.checkBot(target)) {
+      return await ctx.reply("*_Huh, I can't demote my creator!!_*");
+    }
+    try {
+      await ctx.bot.groupParticipantsUpdate(ctx.chat, [target], "demote");
+      await ctx.reply("*_User demote sucessfully!!_*");
+    } catch (err) {
+      await ctx.reply("*_Can,t demote user, try it manually, Sorry!!_*");
+    }
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand: demote", err);
+  }
+});
+smd({
+  pattern: "del",
+  alias: ["delete", "dlt"],
+  desc: "Deletes message of any user",
+  category: "group",
+  filename: __filename,
+  use: "<quote/reply message.>"
+}, async ctx => {
+  try {
+    if (!ctx.reply_message) {
+      return ctx.reply("*_Please reply to a message!!!_*");
+    }
+    let quoted = ctx.reply_message;
+    if (quoted && quoted.fromMe && ctx.isCreator) {
+      return quoted.delete();
+    } else if (quoted && ctx.isGroup) {
+      if (!ctx.isBotAdmin) {
+        return ctx.reply("*I can't delete messages without getting Admin Role.*");
+      }
+      if (!ctx.isAdmin) {
+        return ctx.reply(tlang().admin);
+      }
+      await quoted.delete();
+    } else {
+      return await ctx.reply(tlang().owner);
+    }
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand: del", err);
+  }
+});
+cmd({
+  pattern: "broadcast",
+  desc: "Bot makes a broadcast in all groups",
+  fromMe: true,
+  category: "group",
+  filename: __filename,
+  use: "<text for broadcast.>"
+}, async (ctx, text) => {
+  try {
+    if (!text) {
+      return await ctx.reply("*_Uhh Dear, Provide text to broadcast in all groups_*");
+    }
+    let participants = await ctx.bot.groupFetchAllParticipating();
+    let list = Object.entries(participants).slice(0).map(item => item[1]);
+    let ids = list.map(item => item.id);
+    await ctx.send("*_Sending Broadcast To " + ids.length + " Group Chat, Finish Time " + ids.length * 1.5 + " second_*");
+    let broadcastMsg = "*--❗" + tlang().title + " Broadcast❗--*\n\n *🍀Message:* " + text;
+    let broadcastText = {
+      forwardingScore: 999,
+      isForwarded: true
+    };
+    for (let key of ids) {
+      try {
+        await sleep(1500);
+        await send(ctx, broadcastMsg, {
+          contextInfo: broadcastText
+        }, "", "", key);
+      } catch {}
+    }
+    return await ctx.reply("*Successful Sending Broadcast To " + ids.length + " Group*");
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand: broadcast", err);
+  }
+});
+/*
+{
+   pattern: "group",
+   type: "notes",
+}
+*/

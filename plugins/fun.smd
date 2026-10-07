@@ -1,0 +1,155 @@
+/**
+//══════════════════════════════════════════════════════════════════════════════════════════════════════//
+//                                                                                                      //
+//                                ＷＨＡＴＳＡＰＰ ＢＯＴ－ＭＤ ＢＥＴＡ                                   //
+//                                                                                                      // 
+//                                         Ｖ：1．2．8                                                   // 
+//                                                                                                      // 
+//            ███████╗██╗   ██╗██╗  ██╗ █████╗ ██╗██╗         ███╗   ███╗██████╗                        //
+//            ██╔════╝██║   ██║██║  ██║██╔══██╗██║██║         ████╗ ████║██╔══██╗                       //
+//            ███████╗██║   ██║███████║███████║██║██║         ██╔████╔██║██║  ██║                       //
+//            ╚════██║██║   ██║██╔══██║██╔══██║██║██║         ██║╚██╔╝██║██║  ██║                       //
+//            ███████║╚██████╔╝██║  ██║██║  ██║██║███████╗    ██║ ╚═╝ ██║██████╔╝                       //
+//            ╚══════╝ ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝╚══════╝    ╚═╝     ╚═╝╚═════╝                        //
+//                                                                                                      //
+//                                                                                                      //
+//                                                                                                      //
+//══════════════════════════════════════════════════════════════════════════════════════════════════════//
+*
+   * @project_name : Suhail-Md
+   * @author : Suhail Tech Info
+   * @youtube : https://www.youtube.com/@SuhailTechInfo
+   * @description : Suhail-Md ,A Multi-functional whatsapp user bot.
+   * @version 1.2.8
+*
+* 
+   * Created By Suhail Tech Info.
+   * © 2024 Suhail-Md.
+*/
+
+let Suhail_Md = "Suhail MD Whatsapp bot md";
+const axios = require("axios");
+const {
+  Config,
+  randomeFunfacts,
+  smd
+} = require("../lib");
+const fetch = require("node-fetch");
+smd({
+  cmdname: "question",
+  info: "Random Question.",
+  type: "fun",
+  filename: __filename
+}, async (ctx, input, {
+  smd: smdHelper
+}) => {
+  try {
+    await ctx.reply(await randomeFunfacts(smdHelper));
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand: " + smdHelper, err);
+  }
+});
+smd({
+  cmdname: "truth",
+  info: "truth and dare(truth game.).",
+  type: "fun",
+  filename: __filename
+}, async (ctx, input, {
+  smd: smdHelper
+}) => {
+  try {
+    await ctx.reply(await randomeFunfacts(smdHelper));
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand: " + smdHelper, err);
+  }
+});
+smd({
+  cmdname: "dare",
+  info: "truth and dare(dare game.).",
+  type: "fun",
+  filename: __filename
+}, async (ctx, input, {
+  smd: smdHelper
+}) => {
+  try {
+    await ctx.reply(await randomeFunfacts(smdHelper));
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand: " + smdHelper, err);
+  }
+});
+smd({
+  cmdname: "joke",
+  info: "Sends Joke in chat.",
+  type: "fun",
+  filename: __filename
+}, async (ctx, input, {
+  smd: smdHelper
+}) => {
+  try {
+    await ctx.reply(await randomeFunfacts(smdHelper));
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand: " + smdHelper, err);
+  }
+});
+smd({
+  cmdname: "joke2",
+  info: "Sends Joke in chat.",
+  type: "fun",
+  filename: __filename
+}, async (ctx, input, {
+  smd: smdHelper
+}) => {
+  try {
+    await ctx.reply(await randomeFunfacts(smdHelper));
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand: " + smdHelper, err);
+  }
+});
+smd({
+  cmdname: "fact",
+  info: "Sends fact in chat.",
+  type: "fun",
+  filename: __filename
+}, async (ctx, input, {
+  smd: smdHelper
+}) => {
+  try {
+    await ctx.reply(await randomeFunfacts(smdHelper));
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand: " + smdHelper, err);
+  }
+});
+smd({
+  cmdname: "quotes",
+  info: "Sends quotes in chat.",
+  type: "fun",
+  filename: __filename
+}, async (ctx, input, {
+  smd: smdHelper
+}) => {
+  try {
+    await ctx.reply(await randomeFunfacts(smdHelper));
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand: " + smdHelper, err);
+  }
+});
+smd({
+  cmdname: "define",
+  info: "urban dictionary.",
+  type: "fun",
+  filename: __filename
+}, async (ctx, input) => {
+  try {
+    let word = input ? input : ctx.reply_text;
+    if (!word) {
+      return await ctx.send("*_Hey " + ctx.senderName + ", please provide a text!_*");
+    }
+    let {
+      data: dictionary
+    } = await axios.get("http://api.urbandictionary.com/v0/define?term=" + word);
+    var definitionText = dictionary ? "*Word:* ```" + word + "``` \n*Definition:* ```" + dictionary.list[0].definition.replace(/\[/g, "").replace(/\]/g, "") + "``` \n*Example:* ```" + dictionary.list[0].example.replace(/\[/g, "").replace(/\]/g, "") + "```" : "*_No results found for given word_*";
+    return ctx.reply(definitionText);
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand: define", err, "*No result for:* ```" + text + "```");
+  }
+});

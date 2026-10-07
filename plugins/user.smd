@@ -1,0 +1,173 @@
+/**
+//══════════════════════════════════════════════════════════════════════════════════════════════════════//
+//                                                                                                      //
+//                                ＷＨＡＴＳＡＰＰ ＢＯＴ－ＭＤ ＢＥＴＡ                                   //
+//                                                                                                      // 
+//                                         Ｖ：1．2．8                                                   // 
+//                                                                                                      // 
+//            ███████╗██╗   ██╗██╗  ██╗ █████╗ ██╗██╗         ███╗   ███╗██████╗                        //
+//            ██╔════╝██║   ██║██║  ██║██╔══██╗██║██║         ████╗ ████║██╔══██╗                       //
+//            ███████╗██║   ██║███████║███████║██║██║         ██╔████╔██║██║  ██║                       //
+//            ╚════██║██║   ██║██╔══██║██╔══██║██║██║         ██║╚██╔╝██║██║  ██║                       //
+//            ███████║╚██████╔╝██║  ██║██║  ██║██║███████╗    ██║ ╚═╝ ██║██████╔╝                       //
+//            ╚══════╝ ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝╚══════╝    ╚═╝     ╚═╝╚═════╝                        //
+//                                                                                                      //
+//                                                                                                      //
+//                                                                                                      //
+//══════════════════════════════════════════════════════════════════════════════════════════════════════//
+*
+   * @project_name : Suhail-Md
+   * @author : Suhail Tech Info
+   * @youtube : https://www.youtube.com/@SuhailTechInfo
+   * @description : Suhail-Md ,A Multi-functional whatsapp user bot.
+   * @version 1.2.8
+*
+* 
+   * Created By Suhail Tech Info.
+   * © 2024 Suhail-Md.
+*/
+
+let Suhail_Md = "Suhail MD Whatsapp bot md";
+const {
+  tlang,
+  getAdmin,
+  prefix,
+  Config,
+  sck,
+  sck1,
+  fetchJson,
+  getBuffer,
+  runtime,
+  smd,
+  thumbPath
+} = require("../lib");
+const {
+  Sticker,
+  createSticker,
+  StickerTypes
+} = require("wa-sticker-formatter");
+const fs = require("fs");
+const axios = require("axios");
+const fetch = require("node-fetch");
+const cmd = smd;
+cmd({
+  pattern: "jid",
+  desc: "get jid of all user in a group.",
+  category: "user",
+  filename: __filename,
+  use: "<@user>"
+}, async ({
+  jid: jid,
+  reply: reply,
+  quoted: quoted
+}) => {
+  if (quoted) {
+    return reply(quoted.sender);
+  } else {
+    return reply(jid);
+  }
+});
+cmd({
+  pattern: "getpp",
+  desc: "Get Profile Pic For Given User",
+  category: "user",
+  filename: __filename
+}, async ctx => {
+  try {
+    let sender = ctx.reply_message ? ctx.reply_message.sender : ctx.mentionedJid[0] ? ctx.mentionedJid[0] : ctx.from;
+    let profilePic;
+    try {
+      profilePic = await ctx.bot.profilePictureUrl(sender, "image");
+    } catch (err) {
+      return ctx.reply("```Profile Pic Not Fetched```");
+    }
+    return await ctx.bot.sendMessage(ctx.chat, {
+      image: {
+        url: profilePic
+      },
+      caption: "  *---Profile Pic Is Here---*\n" + Config.caption
+    }, {
+      quoted: ctx
+    });
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand : getpp", err);
+  }
+});
+cmd({
+  pattern: "whois",
+  desc: "Makes photo of replied sticker.",
+  category: "user",
+  use: "<reply to any person>",
+  filename: __filename
+}, async ctx => {
+  try {
+    let sender = ctx.reply_message ? ctx.reply_message.sender : ctx.mentionedJid[0] ? ctx.mentionedJid[0] : false;
+    if (!sender && ctx.isGroup) {
+      const groupPic = (await ctx.bot.profilePictureUrl(ctx.chat, "image").catch(err => thumbPath)) || THUMB_IMAGE;
+      const metadata = ctx.metadata;
+      const adminList = ctx.admins.map((item, index) => "  " + (index + 1) + ". wa.me/" + item.id.split("@")[0]).join("\n");
+      const owner = metadata.owner || ctx.admins.find(item => item.admin === "superadmin")?.id || false;
+      let groupInfo = "\n      *「 GROUP INFORMATION 」*\n*▢ NAME :* \n   • " + metadata.subject + "\n*▢ Members :*\n   • " + metadata.participants.length + "\n*▢ Group Owner :*\n   • " + (owner ? "wa.me/" + owner.split("@")[0] : "notFound") + "\n*▢ Admins :*\n" + adminList + "\n*▢ Description :*\n   • " + (metadata.desc?.toString() || "_not set_") + "\n   ";
+      return await ctx.reply(groupPic, {
+        caption: groupInfo
+      }, "image");
+    } else {
+      if (!sender) {
+        return ctx.reply("*_Please Reply To A Person!_*");
+      }
+      try {
+        var status = await ctx.bot.fetchStatus(sender);
+        var statusText = status.status;
+        var setAt = status.setAt.toString();
+        var parts = setAt.split(" ");
+        if (parts.length > 3) {
+          setAt = parts.slice(0, 5).join(" ");
+        }
+      } catch {
+        var statusText = "undefined";
+        var setAt = "";
+      }
+      var number = sender.split("@")[0];
+      let mediaUrl;
+      try {
+        mediaUrl = await ctx.bot.profilePictureUrl(sender, "image");
+      } catch (err) {
+        mediaUrl = thumbPath;
+      }
+      var pushName = await ctx.bot.getName(sender);
+      return await ctx.bot.sendMessage(ctx.jid, {
+        image: {
+          url: mediaUrl
+        },
+        caption: "\n╔════◇\n║ *『Person's  Information』*\n║ \n║ *🍫Name :* " + pushName + "\n║ *👤Num :* " + number + "\n║ *🎐Bio    :*  " + statusText + "\n║ *🌟SetAt :* " + setAt + "\n║    *Keep Calm Dude🥳*    ◇\n╚════════════════╝\n"
+      }, {
+        quoted: ctx
+      });
+    }
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand : whois", err);
+  }
+});
+cmd({
+  pattern: "wa",
+  desc: "Makes wa me of quoted or mentioned user.",
+  category: "user",
+  filename: __filename
+}, async ctx => {
+  try {
+    let sender = ctx.reply_message ? ctx.reply_message.sender : ctx.mentionedJid[0] ? ctx.mentionedJid[0] : false;
+    await ctx.reply(!sender ? "*Please Reply Or Mention A User*" : "https://wa.me/" + sender.split("@")[0]);
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand : wa", err, false);
+  }
+});
+cmd({
+  pattern: "mee",
+  desc: "Makes wa me for user.",
+  category: "user",
+  filename: __filename
+}, async ctx => {
+  try {
+    return await ctx.reply("https://wa.me/" + ctx.sender.split("@")[0]);
+  } catch {}
+});

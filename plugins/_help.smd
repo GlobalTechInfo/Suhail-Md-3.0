@@ -1,0 +1,765 @@
+/**
+//══════════════════════════════════════════════════════════════════════════════════════════════════════//
+//                                                                                                      //
+//                                ＷＨＡＴＳＡＰＰ ＢＯＴ－ＭＤ ＢＥＴＡ                                   //
+//                                                                                                      // 
+//                                         Ｖ：1．2．8                                                   // 
+//                                                                                                      // 
+//            ███████╗██╗   ██╗██╗  ██╗ █████╗ ██╗██╗         ███╗   ███╗██████╗                        //
+//            ██╔════╝██║   ██║██║  ██║██╔══██╗██║██║         ████╗ ████║██╔══██╗                       //
+//            ███████╗██║   ██║███████║███████║██║██║         ██╔████╔██║██║  ██║                       //
+//            ╚════██║██║   ██║██╔══██║██╔══██║██║██║         ██║╚██╔╝██║██║  ██║                       //
+//            ███████║╚██████╔╝██║  ██║██║  ██║██║███████╗    ██║ ╚═╝ ██║██████╔╝                       //
+//            ╚══════╝ ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝╚══════╝    ╚═╝     ╚═╝╚═════╝                        //
+//                                                                                                      //
+//                                                                                                      //
+//                                                                                                      //
+//══════════════════════════════════════════════════════════════════════════════════════════════════════//
+*
+   * @project_name : Suhail-Md
+   * @author : Suhail Tech Info
+   * @youtube : https://www.youtube.com/@SuhailTechInfo
+   * @description : Suhail-Md ,A Multi-functional whatsapp user bot.
+   * @version 1.2.8-pdm
+*
+* 
+   * Created By Suhail Tech Info.
+   * © 2024 Suhail-Md.
+ ⛥┌┤
+ */
+
+const os = require("os");
+let menus = false;
+const moment = require("moment-timezone");
+const fs = require("fs");
+const Config = require("../config");
+let {
+  fancytext,
+  tlang,
+  tiny,
+  bot_,
+  alive,
+  runtime,
+  formatp,
+  smsg,
+  getAdmin,
+  send,
+  react,
+  botpic,
+  sleep,
+  getBuffer,
+  prefix,
+  sck1,
+  smd,
+  sck,
+  getTime,
+  formatDate,
+  groupdb,
+  smdJson,
+  smdBuffer,
+  isAdmin
+} = require("../lib");
+const long = String.fromCharCode(8206);
+const readmore = long.repeat(4001);
+const sᴜʜᴀɪʟ_ᴍᴅ = require("../lib/plugins");
+const {
+  Sticker,
+  createSticker,
+  StickerTypes
+} = require("wa-sticker-formatter");
+const axios = require("axios");
+const fetch = require("node-fetch");
+const util = require("util");
+const events = sᴜʜᴀɪʟ_ᴍᴅ;
+const {
+  commands
+} = require("../lib");
+const {
+  exec
+} = require("child_process");
+// Was the `translatte` package, which drags in got -> cacheable-request -> http-cache-semantics:
+// three advisories with no upstream fix (got's UNIX-socket redirect, cacheable-request, and the
+// max-stale cross-user cache leak). Same public endpoint in one axios call, same {from,to}
+// signature, no dependency.
+const translate = async (text, { from = "auto", to = "en" } = {}) => {
+  const res = await axios.get("https://translate.google.com/translate_a/single", {
+    params: { client: "gti", sl: from, tl: to, hl: to, dt: "t", q: text },
+    headers: { "User-Agent": "Mozilla/5.0" }
+  });
+  const data = typeof res.data === "string" ? JSON.parse(res.data) : res.data;
+  return { text: (data[0] || []).map(part => part[0]).join("") };
+};
+const cheerio = require("cheerio");
+const path = require("path");
+const cron = require("node-cron");
+var cronStart = false;
+
+/*
+let "USER_IMAGES" = {
+      "description": "Put IMAGES/VIDEOS URL, Make Sure Url have extention like .mp4,.jpg,.png etc",
+      "value": "https://telegra.ph/file/d90855d13352c8aae3981.mp4",
+      "required" :false
+    },
+*/
+smd({
+  cmdname: "help",
+  alias: ["categories", "ctgry", "category"],
+  desc: "category list",
+  category: "general"
+}, async (ctx, text) => {
+  try {
+    if (text.split(" ")[0]) {
+      let commandList = [];
+      const cmd = commands.find(item => item.pattern === text.split(" ")[0].toLowerCase());
+      if (cmd) {
+        commandList.push("*🍁Command:* " + cmd.pattern);
+        if (cmd.category) {
+          commandList.push("*🧩Category:* " + cmd.category);
+        }
+        if (cmd.alias && cmd.alias[0]) {
+          commandList.push("*🧩Alias:* " + cmd.alias.join(", "));
+        }
+        if (cmd.desc) {
+          commandList.push("*🧩Description:* " + cmd.desc);
+        }
+        if (cmd.use) {
+          commandList.push("*〽️Usage:*\n ```" + prefix + cmd.pattern + " " + cmd.use + "```");
+        }
+        await ctx.reply(commandList.join("\n"));
+      }
+    }
+    const menu = {};
+    commands.map(async (item, position) => {
+      if (item.dontAddCommandList === false && item.pattern !== undefined) {
+        if (!menu[item.category]) {
+          menu[item.category] = [];
+        }
+        menu[item.category].push(item.pattern);
+      }
+    });
+    let menuMode = Math.round(Math.random());
+    let listLabel = menuMode === 0 ? "MENU" : "COMMANDS";
+    let menuCaption = "┏━━━━━━━━━━━━━━━━━━━━━━━━\n┃\t *SUHAIL-MD_" + listLabel + "_LIST* \n┗━━━━━━━━━━━━━━━━━━━━━━━━\n\n\t```Reply the number you wants to select```\n\n";
+    let index = 1;
+    let total = 0;
+    for (const category in menu) {
+      total += 1;
+      if (text.toLowerCase() == category.toLowerCase()) {
+        menuCaption = "┏━━⟪ *" + category.toUpperCase() + "* ⟫━━⦿\n\n";
+        for (const pattern of menu[category]) {
+          menuCaption += "┃ ✗ " + fancytext(pattern, 1) + "\n";
+        }
+        menuCaption += "\n┗━━━━━━━━━━━━━━⦿";
+        break;
+      }
+      if (total >= 10) {
+        index += 1;
+        total = 0;
+      }
+      menuCaption += "\n*" + index + "." + total + " |" + category.toUpperCase() + " " + listLabel + "*\n";
+    }
+    ;
+    menuCaption += "\n\n" + Config.caption;
+    return await ctx.sendUi(ctx.jid, {
+      caption: menuCaption
+    });
+  } catch (err) {
+    await ctx.error(err + "\nCommand:help", err);
+  }
+});
+smd({
+  pattern: "menus",
+  type: "MENU list",
+  info: "general",
+  dontAddCommandList: true
+}, async ctx => {
+  try {
+    let caption = ("\n*🦄 ᴜᴘ ᴛɪᴍᴇ :* " + runtime(process.uptime()) + "\n*🍁 ᴛᴏᴅᴀʏ ɪs :* " + ctx.date + "\n*🎗 ɴᴏᴡ ᴛɪᴍᴇ :* " + ctx.time + "\n\n➮Fᴏᴜɴᴅᴇʀ- SuhailTechInfo𝛁\n➮Oᴡɴᴇʀ - " + Config.ownername + "\n➮Nᴜᴍ - " + owner.split(",")[0] + "\n➮Mᴇᴍᴏ - " + formatp(os.totalmem() - os.freemem()) + "/" + formatp(os.totalmem()) + "\n\n *🧑‍💻 :*  Sᴜʜᴀɪʟ-Mᴜʟᴛɪᴅᴇᴠɪᴄᴇ ɪꜱ ɴᴏᴡ Aᴠᴀɪʟᴀʙʟᴇ\n\n" + readmore + "\n╭──❰ *ALL MENU* ❱\n│🏮 Lɪꜱᴛ\n│🏮 Cᴀᴛᴇɢᴏʀʏ\n│🏮 Hᴇʟᴘ\n│🏮 Aʟɪᴠᴇ\n│🏮 Uᴘᴛɪᴍᴇ\n│🏮 Wᴇᴀᴛʜᴇʀ\n│🏮 Lɪɴᴋ\n│🏮 Cᴘᴜ\n│🏮 Rᴇᴘᴏꜱɪᴛᴏʀʏ\n╰─────────────⦁").trim();
+    return await ctx.bot.sendUi(ctx.from, {
+      caption: caption
+    });
+  } catch (err) {
+    await ctx.error(err + "\nCommand:menus", err);
+  }
+});
+sᴜʜᴀɪʟ_ᴍᴅ.cmd({
+  pattern: "setcmd",
+  desc: "To check ping",
+  category: "general",
+  fromMe: true,
+  filename: __filename
+}, async (ctx, quoted, {
+  Void: unused
+}) => {
+  try {
+    if (!quoted) {
+      return await ctx.send("*_Please provide cmd name by replying a Sticker_*");
+    }
+    let input = quoted.split(",");
+    var cmdName;
+    var args;
+    let stickerCmd = false;
+    if (ctx.quoted) {
+      let mtype = ctx.quoted.mtype;
+      if (mtype == "stickerMessage" && quoted) {
+        stickerCmd = true;
+        cmdName = quoted.split(" ")[0];
+        args = "sticker-" + ctx.quoted.msg.fileSha256;
+      }
+    }
+    if (!stickerCmd && input.length > 1) {
+      args = input[0].trim().toLowerCase();
+      cmdName = input[1].trim().toLowerCase();
+    } else if (!stickerCmd) {
+      return await ctx.send("*_Uhh Dear, Give Cmd With New Name_*\n*Eg: _.setcmd New_Name, Cmd_Name_*");
+    }
+    if (args.length < 1) {
+      return await ctx.reply("*_Uhh Please, Provide New_Cmd Name First_*");
+    }
+    if (global.setCmdAlias[args]) {
+      return await ctx.send("*_\"" + (stickerCmd ? "Given Sticker" : args) + "\" Already set for \"" + global.setCmdAlias[args] + "\" Cmd, Please try another " + (stickerCmd ? "Sticker" : "Name") + "_*");
+    }
+    const cmd = sᴜʜᴀɪʟ_ᴍᴅ.commands.find(item => item.pattern === cmdName) || sᴜʜᴀɪʟ_ᴍᴅ.commands.find(item => item.alias && item.alias.includes(cmdName));
+    if (cmd) {
+      global.setCmdAlias[args] = cmd.pattern;
+      return await ctx.send("*_Cmd \"" + global.setCmdAlias[args] + "\" Succesfully set to \"" + (stickerCmd ? "Sticker" : args) + "\"._*\n*_These all names are reset, If bot restart_*");
+    } else {
+      return await ctx.send("*_Provided Cmd( " + cmdName + ") not found in bot cmds. Please Provide Valid cmd Name_*");
+    }
+  } catch (err) {
+    await ctx.error(err + "\nCommand:setcmd", err);
+  }
+});
+sᴜʜᴀɪʟ_ᴍᴅ.cmd({
+  pattern: "delcmd",
+  desc: "To check ping",
+  category: "general",
+  fromMe: true,
+  filename: __filename
+}, async (ctx, text, {
+  Void: unused
+}) => {
+  try {
+    let cmdName = text ? text.split(" ")[0].trim().toLowerCase() : "";
+    let deletedCmd = false;
+    if (ctx.quoted) {
+      if (ctx.quoted.mtype == "stickerMessage") {
+        deletedCmd = true;
+        cmdName = "sticker-" + ctx.quoted.msg.fileSha256;
+      } else if (!text) {
+        return await ctx.send("*_Please reply to a Sticker that set for a Cmd_*");
+      }
+    } else if (!text) {
+      return await ctx.send("*_Uhh Dear, provide Name that set to a cmd_*\n*Eg: _.delcmd Cmd_Name_*");
+    }
+    if (global.setCmdAlias[cmdName]) {
+      await ctx.send("*_\"" + (deletedCmd ? "Given Sticker" : cmdName) + "\" deleted Succesfully at \"" + global.setCmdAlias[cmdName] + "\" cmd_*");
+      delete global.setCmdAlias[cmdName];
+      return;
+    } else {
+      return await ctx.send("*_\"" + (deletedCmd ? "Given Sticker" : cmdName) + "\" not Set for any cmd._*\n *_Please Provide Valid " + (deletedCmd ? "Sticker" : "cmd Name") + " to delete_*");
+    }
+  } catch (err) {
+    await ctx.error(err + "\nCommand:delcmd", err);
+  }
+});
+sᴜʜᴀɪʟ_ᴍᴅ.smd({
+  pattern: "ping",
+  desc: "To check ping",
+  category: "general",
+  filename: __filename
+}, async ctx => {
+  var end = new Date().getTime();
+  const {
+    key: edit
+  } = await ctx.reply("*Testing Ping!!!*");
+  var start = new Date().getTime();
+  return await ctx.send("*Pong*\n *" + (start - end) + " ms* ", {
+    edit: edit
+  }, "", ctx);
+});
+sᴜʜᴀɪʟ_ᴍᴅ.cmd({
+  pattern: "uptime",
+  alias: ["runtime"],
+  desc: "Tells runtime/uptime of bot.",
+  category: "misc",
+  filename: __filename
+}, async ctx => {
+  try {
+    ctx.reply("*_Uptime of " + tlang().title + ": " + runtime(process.uptime()) + "_*");
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand : uptime", err, false);
+  }
+});
+sᴜʜᴀɪʟ_ᴍᴅ.cmd({
+  cmdname: "menu",
+  desc: "Help list",
+  type: "general",
+  filename: __filename
+}, async (ctx, text) => {
+  try {
+    const {
+      commands: commandList
+    } = require("../lib");
+    if (text.split(" ")[0]) {
+      let foundCommands = [];
+      const cmd = commandList.find(item => item.pattern === text.split(" ")[0].toLowerCase());
+      if (cmd) {
+        foundCommands.push("*🍁Command:* " + cmd.pattern);
+        if (cmd.category) {
+          foundCommands.push("*🧩Category:* " + cmd.category);
+        }
+        if (cmd.alias && cmd.alias[0]) {
+          foundCommands.push("*🧩Alias:* " + cmd.alias.join(", "));
+        }
+        if (cmd.desc) {
+          foundCommands.push("*🧩Description:* " + cmd.desc);
+        }
+        if (cmd.use) {
+          foundCommands.push("*〽️Usa:*\n ```" + prefix + cmd.pattern + " " + cmd.use + "```");
+        }
+        if (cmd.usage) {
+          foundCommands.push("*〽️Usage:*\n ```" + cmd.usage + "```");
+        }
+        await ctx.reply(foundCommands.join("\n"));
+      }
+    }
+    var menuTitle;
+    var separator;
+    var menuFooter;
+    var menuBullet;
+    var commandDesc;
+    var menuLine;
+    var menuSection;
+    let sorted = 0;
+    if (Config.menu === "") {
+      sorted = Math.floor(Math.random() * 4) + 1;
+    }
+    if (sorted == 1 || Config.menu.trim().startsWith("1") || Config.menu.toLowerCase().includes("aztec")) {
+      menuTitle = "┏━━⟪ *" + Config.botname + "* ⟫━━⦿";
+      separator = "┃ ✗";
+      menuFooter = "┗━━━━━━━━━━━━━━━⦿";
+      menuBullet = "┌──『";
+      commandDesc = "』──❖\n";
+      menuLine = " | ";
+      menuSection = "\n└──────────────◉";
+    } else if (sorted == 2 || Config.menu.trim().startsWith("2") || Config.menu.toLowerCase().includes("a17")) {
+      menuTitle = "┌───═[ *" + Config.botname + "* ]═──▸\n│╭────────────···▸\n┴│▸";
+      separator = "⬡│▸";
+      menuFooter = "┬│▸\n│╰─────────────···▸\n└───────────────···▸";
+      menuBullet = "┌───〈";
+      commandDesc = "〉───◆\n│╭─────────────···▸\n┴│▸";
+      menuLine = "⬡│▸ ";
+      menuSection = "┬│▸\n│╰────────────···▸▸\n└───────────────···▸";
+    } else {
+      menuTitle = "╭────《  " + Config.botname + "  》────⊷\n│ ╭──────✧❁✧──────◆";
+      separator = "│ │";
+      menuFooter = "│ ╰──────✧❁✧──────◆\n╰══════════════════⊷";
+      menuBullet = "╭────❏";
+      commandDesc = "❏";
+      menuLine = "│";
+      menuSection = "╰━━━━━━━━━━━━━━──⊷";
+    }
+    const menu = {};
+    commandList.map(async (item, index) => {
+      if (item.dontAddCommandList === false && item.pattern !== undefined) {
+        if (!menu[item.category]) {
+          menu[item.category] = [];
+        }
+        menu[item.category].push(item.pattern);
+      }
+    });
+    const menuHeader = ctx.time;
+    const menuSubtitle = ctx.date;
+    let menuCaption = menuTitle + "\n" + separator + " Theme:- " + tlang().title + "\n" + separator + " Owner:- " + Config.ownername + "\n" + separator + " Plugins:- " + commandList.length + "\n" + separator + " Uptime:- " + runtime(process.uptime()) + "\n" + separator + " Mem:- " + formatp(os.totalmem() - os.freemem()) + "/" + formatp(os.totalmem()) + "\n" + separator + " Time:- " + menuHeader + "\n" + separator + " Date:- " + menuSubtitle + "\n" + menuFooter + "\n\n";
+    for (const category in menu) {
+      menuCaption += menuBullet + " *" + tiny(category) + "* " + commandDesc + "\n";
+      if (text.toLowerCase() == category.toLowerCase()) {
+        menuCaption = menuBullet + " *" + tiny(category) + "* " + commandDesc + "\n";
+        for (const categoryName of menu[category]) {
+          menuCaption += menuLine + " " + fancytext(categoryName, 1) + "\n";
+        }
+        menuCaption += menuSection + "\n";
+        break;
+      } else {
+        for (const categoryName of menu[category]) {
+          menuCaption += menuLine + " " + fancytext(categoryName, 1) + "\n";
+        }
+        menuCaption += menuSection + "\n";
+      }
+    }
+    menuCaption += Config.caption;
+    let menuContent = {
+      caption: menuCaption
+    };
+    return await ctx.sendUi(ctx.chat, menuContent, ctx);
+  } catch (err) {
+    await ctx.error(err + "\nCommand:menu", err);
+  }
+});
+sᴜʜᴀɪʟ_ᴍᴅ.cmd({
+  pattern: "list",
+  desc: "list menu",
+  category: "general",
+  react: "🥀"
+}, async ctx => {
+  try {
+    const {
+      commands: menuBox
+    } = require("../lib");
+    let menuCaption = "\n  ╭━━〘 *" + Config.botname + "* 〙────⊷     \n  ┃ ✭ Theme: " + tlang().title + "\n  ┃ ✭ Prefix: " + prefix + "\n  ┃ ✭ Owner: " + Config.ownername + "\n  ┃ ✭ Commands: " + menuBox.length + "\n  ┃ ✭ Uptime: " + runtime(process.uptime()) + "\n  ┃ ✭ Mem: " + formatp(os.totalmem() - os.freemem()) + "/" + formatp(os.totalmem()) + "\n  ╰━━━━━━━━━━━━━━⊷\n";
+    for (let i = 0; i < menuBox.length; i++) {
+      if (menuBox[i].pattern == undefined) {
+        continue;
+      }
+      menuCaption += "*" + (i + 1) + " " + fancytext(menuBox[i].pattern, 1) + "*\n";
+      menuCaption += "  " + fancytext(menuBox[i].desc, 1) + "\n";
+    }
+    return await ctx.sendUi(ctx.chat, {
+      caption: menuCaption + Config.caption
+    });
+  } catch (err) {
+    await ctx.error(err + "\nCommand:list", err);
+  }
+});
+sᴜʜᴀɪʟ_ᴍᴅ.smd({
+  pattern: "owner",
+  desc: "To check ping",
+  category: "general",
+  filename: __filename
+}, async ctx => {
+  try {
+    const vcard = "BEGIN:VCARD\nVERSION:3.0\nFN:" + Config.ownername + "\nORG:;\nTEL;type=CELL;type=VOICE;waid=" + global.owner?.split(",")[0] + ":+" + global.owner?.split(",")[0] + "\nEND:VCARD";
+    let vcardMessage = {
+      contacts: {
+        displayName: Config.ownername,
+        contacts: [{
+          vcard: vcard
+        }]
+      },
+    };
+    return await ctx.sendMessage(ctx.jid, vcardMessage, {
+      quoted: ctx
+    });
+  } catch (err) {
+    await ctx.error(err + "\nCommand:owner", err);
+  }
+});
+sᴜʜᴀɪʟ_ᴍᴅ.cmd({
+  pattern: "trt",
+  alias: ["translate"],
+  category: "general",
+  filename: __filename,
+  use: "< text >",
+  desc: "Translate's given text in desird language."
+}, async (ctx, text) => {
+  try {
+    let lang = text ? text.split(" ")[0].toLowerCase() : "en";
+    if (!ctx.reply_text) {
+      var query = text.replace(lang, "")?.trim() || false;
+    } else {
+      var query = ctx.reply_text;
+    }
+    if (!query) {
+      return await ctx.reply("*Please Give Me Text. Example: _" + prefix + "trt en Who are you_*");
+    }
+    var quoted = await translate(query, {
+      from: "auto",
+      to: lang
+    });
+    if ("text" in quoted) {
+      return await ctx.reply(quoted.text);
+    }
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand trt", err);
+  }
+});
+const readDirectory = dir => {
+  return new Promise((onDir, onError) => {
+    fs.readdir(dir, (err, files) => {
+      if (err) {
+        onError("Error reading directory");
+      } else {
+        onDir(files);
+      }
+    });
+  });
+};
+sᴜʜᴀɪʟ_ᴍᴅ.cmd({
+  pattern: "file",
+  desc: "to get extact name where that command is in repo.\nSo user can edit that.",
+  category: "general",
+  fromMe: true,
+  filename: __filename
+}, async (ctx, text) => {
+  try {
+    if (!text) {
+      return ctx.reply("*Uhh PLease, Provide A Command/Directory*");
+    }
+    if (text.startsWith(".")) {
+      let result = "*------------- FILE MANAGER -------------*\n";
+      try {
+        const categoryList = await readDirectory(text);
+        categoryList.forEach(item => {
+          result += item + "\n";
+        });
+        await ctx.reply(result.toString());
+      } catch (err) {
+        ctx.reply(err);
+      }
+      return;
+    }
+    const {
+      commands: menu
+    } = require("../lib");
+    let commandList = [];
+    let cmdName = text.split(" ")[0].toLowerCase().trim();
+    let cmd = events.commands.find(item => item.pattern === cmdName) || events.commands.find(item => item.alias && item.alias.includes(cmdName));
+    if (!cmd) {
+      return await ctx.reply("*❌No Such commands.*");
+    }
+    commandList.push("*🍁Command:* " + cmd.pattern);
+    if (cmd.category) {
+      commandList.push("*🧩Type:* " + cmd.category);
+    }
+    if (cmd.alias && cmd.alias[0]) {
+      commandList.push("*🧩Alias:* " + cmd.alias.join(", "));
+    }
+    if (cmd.desc) {
+      commandList.push("*✨Description:* " + cmd.desc);
+    }
+    if (cmd.use) {
+      commandList.push("*〽️Usa:*\n ```" + prefix + cmd.pattern + " " + cmd.use + "```");
+    }
+    if (cmd.usage) {
+      commandList.push("*〽️Usage:*\n ```" + cmd.usage + "```");
+    }
+    if (cmd.filename) {
+      commandList.push("*✨FileName:* " + cmd.filename);
+    }
+    try {
+      if (text.includes("function") && cmd.function && ctx.isSuhail && cmd.pattern !== "file") {
+        commandList.push("*🧩Function:* " + cmd.function.toString());
+      }
+    } catch {}
+    await ctx.reply(commandList.join("\n"));
+  } catch (err) {
+    await ctx.error(err + "\nCommand:file", err);
+  }
+});
+sᴜʜᴀɪʟ_ᴍᴅ.cmd({
+  pattern: "eval",
+  alias: ["$"],
+  category: "owner",
+  filename: __filename,
+  fromMe: true,
+  desc: "Runs js code on node server.",
+  use: "< run code >",
+  dontAddCommandList: true
+}, async (ctx, text, {
+  isCreator: unused,
+  cmdName: unusedC,
+  Void: unusedB
+}) => {
+  try {
+    if (!text) {
+      return ctx.reply("*Provide A Query To Run Master*");
+    }
+    let value = eval("const a = async()=>{\n" + text + "\n}\na()");
+    if (typeof value === "object") {
+      await ctx.reply(JSON.stringify(value));
+    } else {
+      await ctx.reply(value.toString());
+    }
+  } catch (err) {
+    return await ctx.reply(err.toString());
+  }
+});
+sᴜʜᴀɪʟ_ᴍᴅ.cmd({
+  pattern: "shell",
+  category: "owner",
+  filename: __filename,
+  fromMe: true,
+  desc: "Runs command in Heroku(server) shell.",
+  use: "<shell cmds | ls,cd >",
+  dontAddCommandList: true
+}, async (ctx, text) => {
+  try {
+    if (!ctx.isCreator) {
+      return ctx.reply(tlang().owner);
+    }
+    if (!text) {
+      return ctx.reply("*Uhh PLease, Provide A Command to Run Heroku*");
+    }
+    exec(text, (custom, customB) => {
+      if (custom) {
+        return ctx.reply("----" + tlang().title + "----\n\n" + custom);
+      }
+      if (customB) {
+        return ctx.reply("----" + tlang().title + "----\n\n" + customB);
+      }
+    });
+  } catch (err) {
+    await ctx.error(err + "\n\ncommand shell", err);
+  }
+});
+smd({
+  on: "text"
+}, async (ctx, text, {
+  mek: mek,
+  body: body,
+  args: args,
+  botNumber: botNumber,
+  isCreator: isCreator,
+  icmd: icmd,
+  store: store,
+  budy: budy,
+  Suhail: Suhail,
+  Void: Void,
+  proto: proto
+}) => {
+  let customD = ctx;
+  try {
+    if (!cronStart) {
+      cron.schedule("*/15 * * * *", () => {
+        cronStart = true;
+        fs.readdir("./temp", (customC, commandList) => {
+          if (customC) {
+            return;
+          }
+          commandList.forEach(item => {
+            try {
+              fs.unlink("./temp/" + item);
+            } catch {}
+          });
+        });
+      });
+    }
+    if (!ctx.reply_message || !text || !ctx.isPublic) {
+      return;
+    }
+    const input = ctx.reply_message.text.split("\n");
+    let number = parseInt(text.split(" ")[0]);
+    if (!isNaN(number)) {
+      if (input.length > 30 && input[1].includes("SUHAIL-MD_FANCY_TEXT")) {
+        var replaced = input.find(item => item.startsWith(number + " "));
+        try {
+          if (replaced) {
+            await ctx.send(replaced.replace("" + number, "").trim(), {}, "", ctx);
+          } else {
+            "";
+          }
+        } catch {}
+      }
+    }
+    let numberB = parseFloat(text.split(" ")[0]);
+    if (isNaN(numberB)) {
+      return;
+    }
+    let numberC = numberB.toFixed(1);
+    var matchedCommand = input.find(item => item.startsWith("*" + numberC + " "));
+    if (matchedCommand && (matchedCommand.endsWith("COMMANDS*") || matchedCommand.endsWith("MENU*"))) {
+      var numbers = matchedCommand.replace("*" + numberC, "").replace("|", "").replace(/COMMANDS\*/gi, "").replace(/MENU\*/gi, "").toLowerCase();
+      if (numbers.length > 0 && numbers.length < 20) {
+        const {
+          commands: menu
+        } = require("../lib");
+        const menuB = {};
+        menu.forEach(item => {
+          if (!item.dontAddCommandList && item.pattern !== undefined) {
+            if (!menuB[item.category]) {
+              menuB[item.category] = [];
+            }
+            menuB[item.category].push({
+              command: item.pattern,
+              info: item.desc,
+              help: prefix + item.pattern + " " + (item.use ? item.use : "")
+            });
+          }
+        });
+        let match = false;
+        for (const category in menuB) {
+          let lowerCategory = "" + category.toLowerCase();
+          if (numbers.includes(lowerCategory)) {
+            match = "┏━━━━━━━━━━━━━━━━━━━━━━━\n┃\t*SUHAIL-MD_" + category.toUpperCase() + "_COMMANDS*  \n┗━━━━━━━━━━━━━━━━━━━━━━━\n\n\n";
+            menuB[category].forEach(item => {
+              match += "*🍁Command:* ```" + item.command + "``` " + (item.info ? "\n*🧩Info:* ```" + item.info + "```" : "") + "\n*〽️Help:* ```" + item.help + "```\n\n";
+            });
+            match += "\n\n" + Config.caption;
+            break;
+          }
+        }
+        if (match) {
+          return await ctx.sendUi(ctx.from, {
+            caption: match
+          });
+        }
+      }
+    }
+  } catch (err) {
+    console.log("ERROR : ", err);
+  }
+});
+/**MASTER */
+smd({
+  on: "text"
+}, async (msg, text, {
+  mek,
+  body,
+  args,
+  botNumber,
+  isCreator,
+  icmd,
+  store,
+  budy,
+  Suhail,
+  Void,
+  proto
+}) => {
+  let conn = Void;
+  let sock = Void;
+  let citel = msg;
+  let message = msg;
+  let m = msg;
+  let jid = msg.chat;
+  let client = Void;
+  const {
+    send,
+    reply,
+    react,
+    sendMessage
+  } = msg;
+let $ = "";
+  if (msg.isCreator) {
+    // Arbitrary code execution — now opt-in. Set EVAL_CMD=true to enable.
+    if (Config.evalCmd === "true" && !Config.HANDLERS.includes(">") && citel.text.startsWith(">")) {
+      let code = budy.slice(1);
+      if (!code) {
+        return citel.reply("Provide me with a query to run Master!");
+      }
+      try {
+        let resultTest = eval(code);
+        if (resultTest) {
+          return citel.reply(util.format(resultTest));
+        }
+      } catch (err) {
+        return citel.reply(util.format(err));
+      }
+    } else if (!Config.HANDLERS.includes("$") && citel.text.startsWith("$")) {
+      let code = budy.slice(1);
+      if (!code) {
+        return citel.reply("Provide me with a query to run Master!");
+      }
+      try {
+        let resultTest = await eval("const a = async()=>{\n" + code + "\n}\na()");
+        await citel.react("🍁");
+        if (resultTest) {
+          return await citel.reply(util.format(resultTest));
+        }
+      } catch (err) {
+        console.log("ERROR FROM RUNNING QUERY WITH MASTER $\n", err);
+        return await citel.reply(util.format(err));
+      }
+    }
+  }
+});
