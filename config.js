@@ -1,5 +1,27 @@
 const fs = require('fs-extra')
-if (fs.existsSync('.env')) require('dotenv').config({ path: __dirname+'/.env' })
+const envPath = __dirname + '/.env'
+if (fs.existsSync(envPath)) {
+  require('dotenv').config({ path: envPath })
+  // dotenv treats every '#' inside an unquoted value as the start of a comment,
+  // which silently truncates values such as a Mega SESSION_ID ("<key>#<id>").
+  // Shell semantics only begin a comment at a '#' preceded by whitespace, so
+  // repair any unquoted value that was cut short that way. Lets users paste a
+  // SESSION_ID in .env unquoted, exactly as they would in config.js.
+  try {
+    const raw = fs.readFileSync(envPath, 'utf8')
+    for (const line of raw.split(/\r?\n/)) {
+      const m = /^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=(.*)$/.exec(line)
+      if (!m) continue
+      const key = m[1]
+      let val = m[2].trim()
+      if (!val || /^["'`]/.test(val)) continue
+      val = val.replace(/\s+#.*$/, '').trim()
+      if (val.includes('#') && (process.env[key] === undefined || val.startsWith(process.env[key]))) {
+        process.env[key] = val
+      }
+    }
+  } catch (e) {}
+}
 
 
 //═══════[Required Variables]════════\\
