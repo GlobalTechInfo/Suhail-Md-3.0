@@ -8,7 +8,6 @@ const {
   getRandom,
   tiny,
   fancytext,
-  yt,
   sleep,
   botpic,
   getBuffer,
@@ -24,7 +23,6 @@ const {
   download
 } = require("aptoide-scraper");
 const googleTTS = require("google-tts-api");
-const ytdl = require("ytdl-secktor");
 const yts = require("secktor-pack");
 const cheerio = require("cheerio");
 const fs = require("fs-extra");
@@ -923,28 +921,24 @@ cmd({
   } catch (err) {}
 });
 // ---------------------------------------------------------------------------
-// Loader API - replaces the youtubei.js / ytdl path for .play, .ytmp3 and .ytmp4.
+// YouTube media API - replaces the youtubei.js / ytdl / gtech path for .play, .song, .ytmp3,
+// .ytmp4 and .ytdoc.
 //
-// The old flow died with "Video not Found": youtubei.js and ytdl no longer resolve streams.
-// Media source: gtech-api. It takes a YouTube URL and hands back direct, progressive media URLs
-// (verified: video_url_hd -> 206 video/mp4 ftypmp42, audio_url -> 206 audio/webm), for both regular
-// videos and Shorts. The previous loaderto endpoint was removed because its downloadUrl 302s into an
-// ad tracker (p.savenow.to -> ey43.com) and never serves media, so no retry could ever succeed.
+// The old flow died with "Video not Found": youtubei.js and ytdl no longer resolve streams, and
+// gtech handed back proxied URLs that 403ed. Media now comes from our own API:
+// /api/youtube/download resolves the video through loader.to and returns a signed, key-free media
+// URL on our own domain (routes/youtube.mjs). That proxy URL streams the real file to any client,
+// unlike the raw loader.to link which 302s into an ad tracker (p.savenow.to -> ey43.com) whenever
+// it is fetched from a different context.
 //
-// The auth check only tests that apikey is present - it accepts any value.
-const GTECH_API = "https://gtech-api-xtp1.onrender.com";
-const GTECH_KEY = "APIKEY";
-// Measured over 3 tries x 3 videos: a "good" video succeeds every time, a "bad" one fails every
-// time on BOTH providers (scrappy returns ERR_YTDLP_EXIT on the same IDs - YouTube blocks those
-// from Render egress), and one in between landed 1 of 3. So per-attempt success is roughly 1/3 and
-// a single retry is not enough. Four attempts puts the odds near 75% for no extra dependency.
-const GTECH_ATTEMPTS = 4;
+// A fresh loader.to job occasionally fails server-side and every attempt is a new job, so retry
+// a few times before giving up.
+const YT_API = "https://api.qasimdev.dpdns.org/api/youtube/download";
+const YT_API_KEY = "qasim-dev";
+const YT_API_ATTEMPTS = 3;
 
-let loaderUrlProblem = "";
-
-// gtech answers with a JSON envelope that carries status:false and a message when it cannot resolve a
-// video, so never trust a single response: parse defensively, require status:true, and verify the
-// media URL actually serves bytes before handing it to the chat.
+// The API streams leading whitespace as a keep-alive before the JSON body, so parse defensively:
+// strings only, trimmed, JSON from the first brace.
 const parseLoaderBody = raw => {
   if (raw && typeof raw === "object") {
     return raw;
@@ -963,81 +957,46 @@ const parseLoaderBody = raw => {
   }
 };
 
-// The endpoint reports success (progress 1000) and hands back a downloadUrl that is sometimes an
-// ad/redirect page rather than the file - which is what produced "unplayable" media. Confirm the
-// URL really serves audio/video before handing it on, and report what came back so the cause is
-// visible instead of shipping a broken file.
-const loaderUrlIsPlayable = async url => {
-  try {
-    const res = await axios.get(url, {
-      method: "GET",
-      responseType: "arraybuffer",
-      timeout: 60000,
-      maxRedirects: 5,
-      headers: {
-        Range: "bytes=0-2047"
-      }
-    });
-    const type = String(res.headers["content-type"] || "").split(";")[0];
-    const bytes = res.data ? res.data.length : 0;
-    if (bytes > 0 && /^(audio|video|application\/octet-stream)/i.test(type)) {
-      return true;
-    }
-    loaderUrlProblem = "served " + (type || "unknown content-type") + ", not media";
-    return false;
-  } catch (err) {
-    loaderUrlProblem = "request failed (" + (err && err.response ? "HTTP " + err.response.status : err && err.code) + ")";
-    return false;
-  }
-};
-
 const loaderFetch = async (ytUrl, format) => {
   // format "720" is the only video caller; everything else wants audio.
   const wantVideo = String(format) === "720";
-  const route = wantVideo ? "/api/video/yt" : "/api/audio/yt";
   let lastErr;
-  for (let attempt = 1; attempt <= GTECH_ATTEMPTS; attempt++) {
+  for (let attempt = 1; attempt <= YT_API_ATTEMPTS; attempt++) {
     try {
-      const res = await axios.get(GTECH_API + route, {
-        params: { apikey: GTECH_KEY, url: ytUrl },
-        timeout: 60000,
+      const res = await axios.get(YT_API, {
+        params: { apiKey: YT_API_KEY, url: ytUrl, format: wantVideo ? "720" : "mp3" },
+        timeout: 90000,
         validateStatus: () => true,
         transformResponse: d => d
       });
       const body = parseLoaderBody(res.data);
-      if (!body) throw new Error("attempt " + attempt + "/" + GTECH_ATTEMPTS + ": non-JSON response");
-      if (body.status !== true) {
-        throw new Error("attempt " + attempt + "/" + GTECH_ATTEMPTS + ": " + (body.message || body.error || "status=false"));
+      if (!body) throw new Error("attempt " + attempt + "/" + YT_API_ATTEMPTS + ": non-JSON response");
+      if (body.success !== true || !body.data) {
+        throw new Error("attempt " + attempt + "/" + YT_API_ATTEMPTS + ": " + (body.message || body.error || "success=false"));
       }
-      const media = (body.result && body.result.media) || {};
-      // Prefer the HD variant but fall back down; gtech reports "No SD video URL available".
-      const downloadUrl = wantVideo
-        ? (media.video_url_hd && media.video_url_hd.startsWith("http") ? media.video_url_hd : media.video_url)
-        : media.audio_url;
+      const media = body.data;
+      // Prefer the signed proxy URL. sourceUrl (the raw loader.to link) is diagnostic only:
+      // fetched directly it 302s into an ad tracker instead of serving the file.
+      const downloadUrl = media.download || media.downloadUrl;
       if (!downloadUrl || !String(downloadUrl).startsWith("http")) {
-        throw new Error("attempt " + attempt + "/" + GTECH_ATTEMPTS + ": no " + (wantVideo ? "video" : "audio") + " url in payload");
-      }
-      // Keep the existing guard: gtech sometimes hands back a URL whose proxy 403s, and shipping
-      // that would post a broken file to the chat instead of an honest error.
-      if (!(await loaderUrlIsPlayable(downloadUrl))) {
-        throw new Error("attempt " + attempt + "/" + GTECH_ATTEMPTS + ": media url " + (loaderUrlProblem || "not playable"));
+        throw new Error("attempt " + attempt + "/" + YT_API_ATTEMPTS + ": no download url in payload");
       }
       return {
         url: downloadUrl,
         title: media.title,
         thumbnail: media.thumbnail,
-        format: wantVideo ? (media.extension || "mp4") : (media.extension || "webm"),
+        format: wantVideo ? "mp4" : "mp3",
         quality: media.quality
       };
     } catch (err) {
       lastErr = err;
-      if (attempt === GTECH_ATTEMPTS) {
+      if (attempt === YT_API_ATTEMPTS) {
         break;
       }
-      await new Promise(r => setTimeout(r, 2500));
+      await new Promise(r => setTimeout(r, 3000));
     }
   }
-  throw new Error("gtech returned no playable file after " + GTECH_ATTEMPTS + " attempts (" + (lastErr && lastErr.message) + ")");
+  throw new Error("qasimdev youtube api returned no file after " + YT_API_ATTEMPTS + " attempts (" + (lastErr && lastErr.message) + ")");
 };
 
 // TikTok download API. The old command scraped three third-party endpoints
@@ -1105,18 +1064,16 @@ const pinterestSearch = async query => {
 };
 
 // Resolve a query or URL to a full YouTube URL.
-// Search provider. qasimdev's /api/youtube/video is preferred over secktor-pack because it answers
-// from Varnish in ~6s once warm, against secktor-pack's consistent ~9s scrape on every call.
+// Search provider. Uses qasimdev's /api/yts/searchVideos (yt-search), which answers in a few
+// seconds, against secktor-pack's consistent ~9s scrape on every call. The previous
+// /api/youtube/video search was slower still: it created a full loader.to job just to return a
+// watch URL, and then every download created another job on top.
 //
-// Cold cache is the normal first response: Varnish exceeds its first-byte timeout while the backend
-// extracts and returns a "503 first byte timeout" HTML page. The object still gets cached on the way
-// through (x-cache-ttl 300), so the next attempt hits it. That is why a retry - not a cache bypass -
-// is the correct response to that 503.
-//
-// Deliberately returns the same { videos: [{ url, ... }] } shape secktor-pack returns, so the four
-// existing call sites keep working untouched. Named ytFind because two call sites already bind a local
-// variable called ytSearch, which would shadow the function.
-const QASIM_SEARCH = "https://api.qasimdev.dpdns.org/api/youtube/video";
+// Deliberately returns the same { videos, all } shape secktor-pack returns ([url, title,
+// thumbnail, timestamp] per item), because the existing call sites read both keys. Named ytFind
+// because two call sites already bind a local variable called ytSearch, which would shadow the
+// function.
+const QASIM_SEARCH = "https://api.qasimdev.dpdns.org/api/yts/searchVideos";
 const QASIM_SEARCH_KEY = "qasim-dev";
 const QASIM_SEARCH_ATTEMPTS = 3;
 
@@ -1124,7 +1081,7 @@ const searchViaQasim = async term => {
   for (let attempt = 1; attempt <= QASIM_SEARCH_ATTEMPTS; attempt++) {
     try {
       const res = await axios.get(QASIM_SEARCH, {
-        params: { apiKey: QASIM_SEARCH_KEY, query: term, format: "360" },
+        params: { apiKey: QASIM_SEARCH_KEY, query: term },
         timeout: 60000,
         validateStatus: () => true,
         transformResponse: d => d
@@ -1132,16 +1089,16 @@ const searchViaQasim = async term => {
       const text = String(res.data === undefined || res.data === null ? "" : res.data);
       if (!text.trim().startsWith("{")) throw new Error("non-JSON response");
       const body = JSON.parse(text);
-      const info = body && body.success === true && body.data && body.data.searchInfo;
-      if (!info || !info.url) throw new Error("no searchInfo.url in payload");
-      return {
-        videos: [{
-          url: info.url,
-          title: body.data.title || "",
-          thumbnail: body.data.thumbnail || "",
-          duration: { seconds: 0, timestamp: info.timestamp || "" }
-        }]
-      };
+      const list = body && body.success === true && body.data && body.data.videos;
+      if (!Array.isArray(list)) throw new Error("no videos in payload");
+      const videos = list.filter(v => v && v.url).map(v => ({
+        url: v.url,
+        title: v.title || "",
+        thumbnail: v.thumbnail || "",
+        timestamp: (v.duration && v.duration.timestamp) || ""
+      }));
+      if (!videos.length) throw new Error("no usable videos in payload");
+      return { videos: videos, all: videos };
     } catch (err) {
       if (attempt === QASIM_SEARCH_ATTEMPTS) {
         console.error("ytFind: qasimdev search failed, falling back to secktor-pack ->", err && err.message);
@@ -1167,7 +1124,7 @@ const resolveYtUrl = async text => {
 
 smd({
   pattern: "ytmp4",
-  alias: ["ytv", "ytvid", "ytvideo"],
+  alias: ["ytv", "ytvid", "ytvideo", "video", "video2"],
   desc: "Downloads video from youtube.",
   category: "downloader",
   filename: __filename,
@@ -1248,56 +1205,25 @@ smd({
     if (!ytDocText || !match[0]) {
       return await ctx.reply("❌Please provide me a url");
     }
-    var url = match[1];
-    var ok = false;
-    try {
-      if (global.ytdl_disabled) {
-        throw "ytdl_ready is disabled!";
-      }
-      let info = await ytdl.getInfo(match[0]);
-      url = info.videoDetails.title;
-      let filePath = "./temp/Suhail-Md " + match[1] + ".mp3";
-      const stream = ytdl(match[0], {
-        filter: format => format.audioBitrate == 160 || format.audioBitrate == 128
-      }).pipe(fs.createWriteStream(filePath));
-      ok = filePath;
-      await new Promise((resolve, reject) => {
-        stream.on("error", reject);
-        stream.on("finish", resolve);
-      });
-    } catch (err) {
-      console.log("here now,ytdl-core : ", err);
-      try {
-        ok = await yt.download(match[1], {
-          type: "audio",
-          quality: "best"
-        });
-      } catch (err3) {
-        return await ctx.error(err3 + "\n\ncommand: ytdoc", err3, "*_file not Found!!_*");
-      }
-    }
-    if (!ok) {
-      return await ctx.send("*_Uhh dear, video not found_*");
-    }
+    await ctx.reply("_Fetching audio..._\n_May take up to a minute._");
+    // Same qasimdev API as .play/.ytmp3; hand the signed proxy URL straight to the document
+    // message instead of downloading to ./temp and re-uploading it.
+    const media = await loaderFetch(match[0], "mp3");
     var ytReply2 = {
       ...(await ctx.bot.contextInfo(Config.botname, "ʏᴛᴅᴏᴄ ᴍᴘ3 ʏᴏᴜᴛᴜʙᴇ"))
     };
-    const ytOptions = {
-      url: ok
-    };
     let ytReply = {
-      document: ytOptions,
+      document: {
+        url: media.url
+      },
       mimetype: "audio/mpeg",
-      fileName: "Suhail-Md--" + match[1] + ".mp3",
+      fileName: (media.title || "Suhail-Md--" + match[1]) + ".mp3",
       caption: Config.caption,
       contextInfo: ytReply2
     };
     await ctx.bot.sendMessage(ctx.jid, ytReply, {
       quoted: ctx
     });
-    try {
-      return await fs.unlinkSync(ok);
-    } catch {}
   } catch (err) {
     await ctx.error(err + "\n\ncommand: ytdoc", err, "*_audio file not Found!!_*");
   }
@@ -1365,7 +1291,7 @@ smd({
               key: appOptions,
               message: {
                 extendedTextMessage: {
-                  text: ("" + prefix + (audioType == "audio" ? "play" : "video") + " " + appUrl + " " + (audioType === "document" ? audioType : "")).trim()
+                  text: ("" + prefix + (audioType == "audio" ? "play" : audioType == "document" ? "ytdoc" : "video") + " " + appUrl).trim()
                 }
               },
               pushName: ctx.pushName,
