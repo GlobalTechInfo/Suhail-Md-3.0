@@ -77,6 +77,7 @@
     "@mapbox/node-pre-gyp": "^2.0.2",
     "axios": "^1.20.0",
     "sharp": "^0.35.5",
+    "uuid": "^11.1.1",
     "basic-ftp": "^6.2.1",
     "file-type": "$file-type",
     "discord-mongoose-economy": {
