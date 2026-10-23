@@ -4,7 +4,7 @@
 
 
   <p align="center">
-<a href="https://github.com/GloablTechInfo/followers"><img title="Followers" src="https://img.shields.io/github/followers/GloablTechInfo?color=blue&style=flat-square"></a>
+<a href="https://github.com/GloablTechInfo/followers"><img title="Followers" src="https://img.shields.io/github/followers/GlobalTechInfo?color=blue&style=flat-square"></a>
 <a href="https://github.com/GlobalTechInfo/Suhail-Md-3.0/stargazers/"><img title="Stars" src="https://img.shields.io/github/stars/GlobalTechInfo/Suhail-Md-3.0?color=blue&style=flat-square"></a>
 <a href="https://github.com/GlobalTechInfo/Suhail-Md-3.0/network/members"><img title="Forks" src="https://img.shields.io/github/forks/GlobalTechInfo/Suhail-Md-3.0?color=blue&style=flat-square"></a>
 <a href="https://github.com/GlobalTechInfo/Suhail-Md-3.0/"><img title="Size" src="https://img.shields.io/github/repo-size/GlobalTechInfo/Suhail-Md-3.0?style=flat-square&color=green"></a>
