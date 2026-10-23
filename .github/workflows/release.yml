@@ -1,0 +1,97 @@
+name: Build & Publish Release
+
+# Builds and validates the tree, then publishes a GitHub Release whenever a
+# version tag is pushed. Existing tags in this repo use a capital V (V3.0.0),
+# so both V* and v* are matched.
+
+on:
+  push:
+    tags:
+      - "V*"
+      - "v*"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Build and publish release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+
+      # canvas (node-canvas) has no prebuilt binary for Node 24, so it compiles
+      # from source during `npm ci` and needs these system libraries.
+      - name: Install system build dependencies (node-canvas)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential pkg-config \
+            libcairo2-dev libpango1.0-dev libjpeg-dev \
+            libgif-dev librsvg2-dev
+
+      - name: Install dependencies (npm ci)
+        run: npm ci
+
+      # --- Validation: fail the release if the tree is broken ---
+      - name: Syntax check (all .js / .smd)
+        run: node .github/scripts/syntax-check.js
+
+      - name: Dependency resolution check
+        run: node .github/scripts/check-deps.js
+
+      # Informational only: surface a tag/version mismatch without blocking,
+      # since package.json carries a pre-release suffix (e.g. 3.1.0-dev).
+      - name: Tag vs package.json version (informational)
+        run: |
+          TAG="${GITHUB_REF_NAME#?}"          # strip leading V or v
+          PKG="$(node -p "require('./package.json').version")"
+          echo "tag=$TAG package.json=$PKG"
+          if [ "${TAG%%-*}" != "${PKG%%-*}" ]; then
+            echo "::warning::Tag ${GITHUB_REF_NAME} does not match package.json version ${PKG} (compared on the pre-release-stripped base)"
+          fi
+
+      # --- Package: git archive includes only tracked files, so .gitignore
+      #     exclusions (node_modules, session, auth, temp, .env) apply by default. ---
+      - name: Package release archives
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME}"
+          BASE="suhail-md-${TAG}"
+          mkdir -p dist
+          git archive --format=tar.gz --prefix="${BASE}/" -o "dist/${BASE}.tar.gz" HEAD
+          git archive --format=zip   --prefix="${BASE}/" -o "dist/${BASE}.zip"   HEAD
+          ( cd dist && sha256sum "${BASE}.tar.gz" "${BASE}.zip" > SHA256SUMS.txt )
+          echo "Packaged:"
+          ls -lh dist/
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME}"
+          # Re-running the workflow should update assets on the existing release
+          # rather than fail outright.
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release ${TAG} already exists; refreshing assets."
+            gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" --clobber dist/*
+          else
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" \
+              --title "$TAG" \
+              --generate-notes \
+              dist/*
+          fi
+          echo "Release URL:"
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json url --jq .url
