@@ -54,7 +54,7 @@ const {
   Sticker,
   createSticker,
   StickerTypes
-} = require("wa-sticker-formatter");
+} = require("stickers-formatter");
 const moment = require("moment-timezone");
 // discord-xp was imported here but never used; removed (it also pinned a vulnerable mongoose 5.x).
 const fs = require("fs-extra");

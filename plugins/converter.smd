@@ -38,7 +38,7 @@ const {
   Sticker,
   createSticker,
   StickerTypes
-} = require("wa-sticker-formatter");
+} = require("stickers-formatter");
 const fetch = require("node-fetch");
 const {
   userdb,
