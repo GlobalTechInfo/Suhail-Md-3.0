@@ -9,6 +9,7 @@ on:
     tags:
       - "V*"
       - "v*"
+      - "[0-9]*"   # bare semver tags like 3.1.0-dev
 
 permissions:
   contents: write
@@ -55,11 +56,13 @@ jobs:
       # since package.json carries a pre-release suffix (e.g. 3.1.0-dev).
       - name: Tag vs package.json version (informational)
         run: |
-          TAG="${GITHUB_REF_NAME#?}"          # strip leading V or v
+          RAW="${GITHUB_REF_NAME}"
+          TAG="$RAW"
+          case "$RAW" in [Vv]*) TAG="${RAW#?}" ;; esac   # only strip a V/v prefix
           PKG="$(node -p "require('./package.json').version")"
-          echo "tag=$TAG package.json=$PKG"
+          echo "tag=$RAW (normalized: $TAG) package.json=$PKG"
           if [ "${TAG%%-*}" != "${PKG%%-*}" ]; then
-            echo "::warning::Tag ${GITHUB_REF_NAME} does not match package.json version ${PKG} (compared on the pre-release-stripped base)"
+            echo "::warning::Tag ${RAW} does not match package.json version ${PKG} (compared on the pre-release-stripped base)"
           fi
 
       # --- Package: git archive includes only tracked files, so .gitignore
