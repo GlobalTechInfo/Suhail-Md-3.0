@@ -2,9 +2,9 @@
 //══════════════════════════════════════════════════════════════════════════════════════════════════════//
 //                                                                                                      //
 //                                ＷＨＡＴＳＡＰＰ ＢＯＴ－ＭＤ ＢＥＴＡ                                   //
-//                                                                                                      // 
-//                                         Ｖ：1．2．8                                                   // 
-//                                                                                                      // 
+//                                                                                                      //
+//                                         Ｖ：1．2．8                                                   //
+//                                                                                                      //
 //            ███████╗██╗   ██╗██╗  ██╗ █████╗ ██╗██╗         ███╗   ███╗██████╗                        //
 //            ██╔════╝██║   ██║██║  ██║██╔══██╗██║██║         ████╗ ████║██╔══██╗                       //
 //            ███████╗██║   ██║███████║███████║██║██║         ██╔████╔██║██║  ██║                       //
@@ -27,195 +27,86 @@
    * © 2024 Suhail-Md.
 */
 
-let Suhail_Md = "Suhail MD Whatsapp bot md";
-const Config = require("../config");
-let {
-  smd,
-  lang,
-  textToLogoGenerator,
-  prefix
-} = require("../lib");
-smd({
-  cmdname: "slice",
-  type: "logo",
-  info: "Some text to image feature with various styles.",
-  filename: __filename
-}, async (ctx, text, {
-  cmdName: cmdName
-}) => {
-  try {
-    if (!text) {
-      return ctx.reply("*_Example : " + (prefix + cmdName) + " Suhail_*");
-    }
-    return await textToLogoGenerator(ctx, "create-light-glow-sliced-text-effect-online-1068", text);
-  } catch (err) {
-    return await ctx.error(err + "\n\ncmdName: " + cmdName, err);
+const axios = require("axios");
+let { smd, prefix } = require("../lib");
+
+// qasimdev Ephoto360 "Custom Effect" API. Note: the public docs list the route as
+// /api/ephoto/custom, but that path returns "Route not found" on the live server —
+// /api/ephoto/customEffect is the route that actually resolves. Each effect is addressed by its
+// full en.ephoto360.com page URL. 1-text effects take `text`; 2-text effects take `text1`/`text2`.
+const EPHOTO_API = "https://api.qasimdev.dpdns.org/api/ephoto/customEffect";
+const EPHOTO_KEY = "qasim-dev";
+const EPHOTO_TIMEOUT = 120000;
+
+// cmdname -> { url, texts }. `texts` is how many inputs the effect expects (1 or 2).
+const EFFECTS = {
+  slice: { url: "https://en.ephoto360.com/create-sliced-light-text-effect-online-712.html", texts: 1 },
+  glow: { url: "https://en.ephoto360.com/create-glowing-text-effects-online-706.html", texts: 1 },
+  gitch1: { url: "https://en.ephoto360.com/create-pixel-glitch-text-effect-online-769.html", texts: 1 },
+  steal: { url: "https://en.ephoto360.com/dragon-steel-text-effect-online-347.html", texts: 1 },
+  avenger: { url: "https://en.ephoto360.com/create-logo-3d-style-avengers-online-427.html", texts: 2 },
+  marvel: { url: "https://en.ephoto360.com/create-marvel-style-logo-419.html", texts: 2 },
+  phub: { url: "https://en.ephoto360.com/create-pornhub-style-logos-online-free-549.html", texts: 2 },
+  glitch: { url: "https://en.ephoto360.com/create-digital-glitch-text-effects-online-767.html", texts: 1 },
+  glitch2: { url: "https://en.ephoto360.com/create-impressive-neon-glitch-text-effects-online-768.html", texts: 1 },
+  grafiti: { url: "https://en.ephoto360.com/create-a-cartoon-style-graffiti-text-effect-online-668.html", texts: 1 }
+};
+
+// Calls the API and returns the generated image URL. `input` is the raw user text; two-text
+// effects split it on ";".
+async function ephotoEffect(url, texts, input) {
+  const params = { apiKey: EPHOTO_KEY, url };
+  if (texts === 2) {
+    const parts = String(input || "").split(";").map(s => s.trim());
+    params.text1 = parts[0] || "";
+    params.text2 = parts[1] || "";
+  } else {
+    params.text = String(input || "").trim();
   }
-});
-smd({
-  cmdname: "glow",
-  type: "logo",
-  info: "Some text to image feature with various styles.",
-  filename: __filename
-}, async (ctx, text, {
-  cmdName: cmdName
-}) => {
-  try {
-    if (!text) {
-      return ctx.reply("*_Example : " + (prefix + cmdName) + " Suhail_*");
-    }
-    return await textToLogoGenerator(ctx, "free-advanced-glow-text-effect-873", text);
-  } catch (err) {
-    return await ctx.error(err + "\n\ncmdName: " + cmdName, err);
+  const res = await axios.get(EPHOTO_API, {
+    params,
+    timeout: EPHOTO_TIMEOUT,
+    validateStatus: () => true,
+    transformResponse: d => d
+  });
+  const raw = String(res.data === undefined || res.data === null ? "" : res.data);
+  if (!raw.trim().startsWith("{")) {
+    throw new Error("Ephoto360 API returned a non-JSON response (HTTP " + res.status + ")");
   }
-});
-smd({
-  cmdname: "gitch1",
-  type: "logo",
-  info: "Some text to image feature with various styles.",
-  filename: __filename
-}, async (ctx, text, {
-  cmdName: cmdName
-}) => {
-  try {
-    if (!text) {
-      return ctx.reply("*_Example : " + (prefix + cmdName) + " Suhail_*");
-    }
-    return await textToLogoGenerator(ctx, "create-impressive-glitch-text-effects-online-1027", text);
-  } catch (err) {
-    return await ctx.error(err + "\n\ncmdName: " + cmdName, err);
+  const body = JSON.parse(raw);
+  if (body.success !== true || !body.data || !body.data.image_url) {
+    throw new Error(body.error || body.message || "effect generation failed");
   }
-});
-smd({
-  cmdname: "steal",
-  type: "logo",
-  info: "Some text to image feature with various styles.",
-  filename: __filename
-}, async (ctx, text, {
-  cmdName: cmdName
-}) => {
-  try {
-    let from = text ? text.split(";")[0] : "";
-    let to = text ? text.split(";")[1] : "";
-    if (!to || !from) {
-      return await ctx.reply("*_Example : " + (prefix + cmdName) + " text1;text2_*");
+  return body.data.image_url;
+}
+
+// Register one command per effect. `for...of` over Object.entries gives each iteration its own
+// cmdName/effect bindings, so the closures capture the right values.
+for (const [cmdName, effect] of Object.entries(EFFECTS)) {
+  smd({
+    cmdname: cmdName,
+    type: "logo",
+    info: "Some text to image feature with various styles.",
+    filename: __filename
+  }, async (ctx, text) => {
+    try {
+      const input = String(text || "").trim();
+      if (effect.texts === 2) {
+        const [a, b] = input.split(";").map(s => s.trim());
+        if (!a || !b) {
+          return ctx.reply("*_Example : " + (prefix + cmdName) + " text1;text2_*");
+        }
+      } else if (!input) {
+        return ctx.reply("*_Example : " + (prefix + cmdName) + " Suhail_*");
+      }
+      const imageUrl = await ephotoEffect(effect.url, effect.texts, input);
+      const logoData = (await ctx.bot.contextInfo("ᴛᴇxᴛ ᴛᴏ ʟᴏɢᴏ", "Hello " + ctx.senderName)) || {};
+      return await ctx.bot.sendMessage(ctx.jid, {
+        image: { url: imageUrl },
+        contextInfo: logoData
+      }, { messageId: ctx.bot.messageId() });
+    } catch (err) {
+      return await ctx.error(err + "\n\ncmdName: " + cmdName, err);
     }
-    return await textToLogoGenerator(ctx, "3d-steel-text-effect-877", from, to);
-  } catch (err) {
-    return await ctx.error(err + "\n\ncmdName: " + cmdName, err);
-  }
-});
-smd({
-  cmdname: "avenger",
-  type: "logo",
-  info: "Some text to image feature with various styles.",
-  filename: __filename
-}, async (ctx, text, {
-  cmdName: cmdName
-}) => {
-  try {
-    let from = text ? text.split(";")[0] : "";
-    let to = text ? text.split(";")[1] : "";
-    if (!to || !from) {
-      return await ctx.reply("*_Example : " + (prefix + cmdName) + " text1;text2_*");
-    }
-    return await textToLogoGenerator(ctx, "create-3d-avengers-logo-online-974", from, to);
-  } catch (err) {
-    return await ctx.error(err + "\n\ncmdName: " + cmdName, err);
-  }
-});
-smd({
-  cmdname: "marvel",
-  type: "logo",
-  info: "Some text to image feature with various styles.",
-  filename: __filename
-}, async (ctx, text, {
-  cmdName: cmdName
-}) => {
-  try {
-    let from = text ? text.split(";")[0] : "";
-    let to = text ? text.split(";")[1] : "";
-    if (!to || !from) {
-      return await ctx.reply("*_Example : " + (prefix + cmdName) + " text1;text2_*");
-    }
-    return await textToLogoGenerator(ctx, "create-logo-style-marvel-studios-ver-metal-972", from, to);
-  } catch (err) {
-    return await ctx.error(err + "\n\ncmdName: " + cmdName, err);
-  }
-});
-smd({
-  cmdname: "phub",
-  type: "logo",
-  info: "Some text to image feature with various styles.",
-  filename: __filename
-}, async (ctx, text, {
-  cmdName: cmdName
-}) => {
-  try {
-    let from = text ? text.split(";")[0] : "";
-    let to = text ? text.split(";")[1] : "";
-    if (!to || !from) {
-      return await ctx.reply("*_Example : " + (prefix + cmdName) + " text1;text2_*");
-    }
-    return await textToLogoGenerator(ctx, "pornhub-style-logo-online-generator-free-977", from, to);
-  } catch (err) {
-    return await ctx.error(err + "\n\ncmdName: " + cmdName, err);
-  }
-});
-smd({
-  cmdname: "glitch",
-  type: "logo",
-  info: "Some text to image feature with various styles.",
-  filename: __filename
-}, async (ctx, text, {
-  cmdName: cmdName
-}) => {
-  try {
-    let from = text ? text.split(";")[0] : "";
-    let to = text ? text.split(";")[1] : "";
-    if (!to || !from) {
-      return await ctx.reply("*_Example : " + (prefix + cmdName) + " text1;text2_*");
-    }
-    return await textToLogoGenerator(ctx, "create-glitch-text-effect-style-tik-tok-983", from, to);
-  } catch (err) {
-    return await ctx.error(err + "\n\ncmdName: " + cmdName, err);
-  }
-});
-smd({
-  cmdname: "glitch2",
-  type: "logo",
-  info: "Some text to image feature with various styles.",
-  filename: __filename
-}, async (ctx, text, {
-  cmdName: cmdName
-}) => {
-  try {
-    let from = text ? text.split(";")[0] : "";
-    let to = text ? text.split(";")[1] : "";
-    if (!to || !from) {
-      return await ctx.reply("*_Example : " + (prefix + cmdName) + " text1;text2_*");
-    }
-    return await textToLogoGenerator(ctx, "create-a-glitch-text-effect-online-free-1026", from, to);
-  } catch (err) {
-    return await ctx.error(err + "\n\ncmdName: " + cmdName, err);
-  }
-});
-smd({
-  cmdname: "grafiti",
-  type: "logo",
-  info: "Some text to image feature with various styles.",
-  filename: __filename
-}, async (ctx, text, {
-  cmdName: cmdName
-}) => {
-  try {
-    let from = text ? text.split(";")[0] : "";
-    let to = text ? text.split(";")[1] : "";
-    if (!to || !from) {
-      return await ctx.reply("*_Example : " + (prefix + cmdName) + " text1;text2_*");
-    }
-    return await textToLogoGenerator(ctx, "create-a-cool-graffiti-text-on-the-wall-1010", from, to);
-  } catch (err) {
-    return await ctx.error(err + "\n\ncmdName: " + cmdName, err);
-  }
-});
+  });
+}
