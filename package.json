@@ -84,5 +84,12 @@
       "mongoose": "$mongoose"
     },
     "chokidar": "^4.0.3"
+  },
+  "allowScripts": {
+    "@whiskeysockets/baileys@6.7.24": true,
+    "canvas@2.11.2": true,
+    "protobufjs@7.6.6": true,
+    "sharp@0.35.5": true,
+    "es5-ext@0.10.64": true
   }
 }
