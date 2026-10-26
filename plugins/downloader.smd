@@ -126,7 +126,7 @@ smd({
       } catch {}
     }
   } catch (err) {
-    await ctx.error(err + "\n\ncommand: insta", err);
+    await ctx.error(err + "\n\ncommand: wikimedia", err);
   }
 });
 smd({
@@ -833,7 +833,7 @@ smd({
   try {
     let mediafireUrl = text.includes("mediafire.com") ? text : ctx.reply_text || "";
     if (!mediafireUrl.includes("mediafire.com")) {
-      return ctx.reply("*_Provide mediafire url, Use: " + prefix + "mf https://www.mediafire.com/file/i33wo2xvgvid05m/muezzaverse_2221749531_musicaldown.com.mp4/file!_*");
+      return ctx.reply("*_Provide mediafire url, Use: " + prefix + "mf https://www.mediafire.com/file/k60ooi301s4vkfo/subdomains.txt/file!_*");
     }
     let mediafireId2 = mediafireUrl.split(" ")[0];
     const response = await mediafire(mediafireId2);

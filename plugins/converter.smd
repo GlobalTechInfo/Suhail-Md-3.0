@@ -454,7 +454,7 @@ smd({
       return ctx.reply("Provide me a link");
     }
     let longUrl = input.split(" ")[0];
-    let response = await axios.get("https://tinyurl.com/api-create.php?url=" + longUrl);
+    let response = await axios.get("https://tinyurl.com/api-create.php?url=" + encodeURIComponent(longUrl));
     ctx.reply("*🛡️Your Shortened URL*\n\n" + response.data);
   } catch (err) {
     ctx.error(err + "\n\ncmdName: tiny", err, false);
@@ -531,7 +531,7 @@ smd({
     if (!input) {
       return ctx.reply("*Provide Text To generate QR!*");
     }
-    let quoted = "https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=" + text;
+    let quoted = "https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=" + encodeURIComponent(input);
     await ctx.bot.sendUi(ctx.jid, {
       caption: "*_Scan Qr To Get You Text_*"
     }, {

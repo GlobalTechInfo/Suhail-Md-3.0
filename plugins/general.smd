@@ -104,7 +104,7 @@ async function aiResponce(ctx, mode, prompt = "") {
         image_url: prompt,
         size: "auto"
       };
-      axios.post("https://api.remove.bg/v1.0/removebg", payload, {
+      await axios.post("https://api.remove.bg/v1.0/removebg", payload, {
         headers: {
           "X-Api-Key": Config.REMOVE_BG_KEY
         },
