@@ -92,6 +92,9 @@ global.api_smd = "https://api.qasimdev.dpdns.org" //  || "https://api-smd-1.verc
 global.scan = "https://suhail-pair.onrender.com";
 
 global.SESSION_ID = process.env.SESSION_ID  || ""  // PUT your SESSION_ID 
+// Telegram bot token used by the .tgs sticker downloader. Create one with @BotFather,
+// then set TELEGRAM_BOT_TOKEN in .env or put it inside the quotes below.
+global.TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "";
 
 
 module.exports = {
@@ -119,6 +122,7 @@ module.exports = {
   KOYEB_API : process.env.KOYEB_API  || "false",
 
   REMOVE_BG_KEY : process.env.REMOVE_BG_KEY  || "",
+  TELEGRAM_BOT_TOKEN: global.TELEGRAM_BOT_TOKEN || "",
   OPENAI_API_KEY: process.env.OPENAI_API_KEY || "",
   HF_TOKEN: process.env.HF_TOKEN || process.env.HUGGINGFACE_TOKEN || "",
   HEROKU_API_KEY: process.env.HEROKU_API_KEY || "",

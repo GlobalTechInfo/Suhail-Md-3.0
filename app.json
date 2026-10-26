@@ -96,6 +96,11 @@
       "value": "",
       "required" :false
     },
+    "TELEGRAM_BOT_TOKEN": {
+      "description": "Telegram bot token used by the .tgs sticker downloader. Create one with @BotFather.",
+      "value": "",
+      "required" :false
+    },
     "ELEVENLAB_API_KEY": {
       "description": "Put your ElevenLab api key here for Aitts. Watch tutorial from https://youtu.be/HCDcdPtkwg4 ",
       "value": "",

@@ -40,6 +40,7 @@ smd({
   filename: __filename,
   use: "<add sticker url.>"
 }, async (ctx, text) => {
+  let telegramToken = String(Config.TELEGRAM_BOT_TOKEN || global.TELEGRAM_BOT_TOKEN || "").trim();
   try {
     if (!text) {
       return await ctx.reply("_Enter a tg sticker url_\nEg: .tgs https://t.me/addstickers/Oldboyfinal\nKeep in mind that there is a chance of ban if used frequently");
@@ -47,11 +48,18 @@ smd({
     if (!text.includes("addstickers")) {
       return await ctx.reply("_Uhh Please Enter a Valid tg sticker url_\nEg: .tgs https://t.me/addstickers/Oldboyfinal");
     }
-    let stickerUrl = text.split("|")[0];
-    let packName = stickerUrl.split("/addstickers/")[1];
+    if (!telegramToken) {
+      return await ctx.reply("*_TELEGRAM_BOT_TOKEN is not set._*\nAdd it to your .env or config.js to use .tgs.");
+    }
+    let stickerUrl = text.split("|")[0].trim();
+    let packName = (stickerUrl.split("/addstickers/")[1] || "").trim();
+    if (!packName) {
+      return await ctx.reply("_Uhh Please Enter a Valid tg sticker url_\nEg: .tgs https://t.me/addstickers/Oldboyfinal");
+    }
+    let telegramApi = "https://api.telegram.org/bot" + telegramToken;
     let {
       result: stickers
-    } = await fetchJson("https://api.telegram.org/bot891038791:AAHWB1dQd-vi0IbH2NjKYUk-hqQ8rQuzPD4/getStickerSet?name=" + encodeURIComponent(packName) + " ");
+    } = await fetchJson(telegramApi + "/getStickerSet?name=" + encodeURIComponent(packName));
     let options = text.split("|")[1] || "";
     let infoText2 = "Total stickers: " + stickers.stickers.length + "\n*Estimated complete in:* " + stickers.stickers.length * 1.5 + " seconds\nKeep in mind that there is a chance of a ban if used frequently";
     if (stickers.is_animated) {
@@ -80,8 +88,8 @@ smd({
     }
     await ctx.reply(infoText2 + "\n\n_Downloading as " + packName2 + " From index *" + fromIndex + "* to *" + toIndex + "*._\nIf you wants more to download then use Like \n\n .tgs " + stickerUrl + " |  10 ,  20 ; photo");
     for (fromIndex; fromIndex < toIndex; fromIndex++) {
-      let response = await fetchJson("https://api.telegram.org/bot891038791:AAHWB1dQd-vi0IbH2NjKYUk-hqQ8rQuzPD4/getFile?file_id=" + stickers.stickers[fromIndex].file_id);
-      let fileUrl = "https://api.telegram.org/file/bot891038791:AAHWB1dQd-vi0IbH2NjKYUk-hqQ8rQuzPD4/" + response.result.file_path;
+      let response = await fetchJson(telegramApi + "/getFile?file_id=" + stickers.stickers[fromIndex].file_id);
+      let fileUrl = "https://api.telegram.org/file/bot" + telegramToken + "/" + response.result.file_path;
       if (isPhoto) {
         let buffer = await getBuffer(fileUrl);
         await ctx.reply(buffer, {
@@ -98,7 +106,13 @@ smd({
       }
     }
   } catch (err) {
-    await ctx.error(err + "\n\ncommand: tgs", err, "*_Error Sending telegram stickers!!!_*");
+    let errorText = String(err && err.stack || err);
+    if (telegramToken) {
+      [telegramToken, encodeURIComponent(telegramToken)].forEach(token => {
+        errorText = errorText.split(token).join("[TELEGRAM_BOT_TOKEN]");
+      });
+    }
+    await ctx.error(errorText + "\n\ncommand: tgs", errorText, "*_Error Sending telegram stickers!!!_*");
   }
 });
 smd({
@@ -126,7 +140,7 @@ smd({
       } catch {}
     }
   } catch (err) {
-    await ctx.error(err + "\n\ncommand: insta", err);
+    await ctx.error(err + "\n\ncommand: wikimedia", err);
   }
 });
 smd({
@@ -833,7 +847,7 @@ smd({
   try {
     let mediafireUrl = text.includes("mediafire.com") ? text : ctx.reply_text || "";
     if (!mediafireUrl.includes("mediafire.com")) {
-      return ctx.reply("*_Provide mediafire url, Use: " + prefix + "mf https://www.mediafire.com/file/i33wo2xvgvid05m/muezzaverse_2221749531_musicaldown.com.mp4/file!_*");
+      return ctx.reply("*_Provide mediafire url, Use: " + prefix + "mf https://www.mediafire.com/file/k60ooi301s4vkfo/subdomains.txt/file!_*");
     }
     let mediafireId2 = mediafireUrl.split(" ")[0];
     const response = await mediafire(mediafireId2);
