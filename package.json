@@ -34,7 +34,7 @@
     "google-tts-api": "^2.0.2",
     "human-readable": "^0.2.1",
     "jimp": "^1.6.0",
-    "link-preview-js": "^3.2.0",
+    "link-preview-js": "^4.0.4",
     "mediaforge": "^2.2.0",
     "megajs": "^1.3.10",
     "moment-timezone": "^0.5.34",
@@ -68,7 +68,6 @@
   "homepage": "https://github.com/GlobalTechInfo/Suhail-Md-3.0#readme",
   "overrides": {
     "jsonpath-plus": "^10.3.0",
-    "undici": "^6.28.1",
     "xml2js": "^0.6.2",
     "qs": "^6.16.0",
     "minimatch": "^3.1.2",
@@ -83,7 +82,14 @@
     "discord-mongoose-economy": {
       "mongoose": "$mongoose"
     },
-    "chokidar": "^4.0.3"
+    "chokidar": "^4.0.3",
+    "link-preview-js": "$link-preview-js",
+    "zod": "^4.6.7",
+    "body-parser": "^1.20.9",
+    "encoding-sniffer": "^1.0.2",
+    "youtubei.js": {
+      "undici": "^6.29.1"
+    }
   },
   "allowScripts": {
     "@whiskeysockets/baileys@6.7.24": true,
