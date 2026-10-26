@@ -58,7 +58,6 @@ const {
 const moment = require("moment-timezone");
 // discord-xp was imported here but never used; removed (it also pinned a vulnerable mongoose 5.x).
 const fs = require("fs-extra");
-const Jimp = require("jimp");
 const sᴜʜᴀɪʟ_ᴍᴅ = require("../lib/plugins");
 const {
   cmd
